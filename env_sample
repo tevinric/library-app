@@ -1,0 +1,19 @@
+# Database Configuration
+DB_HOST=postgres_library_app
+DB_PORT=5432
+DB_NAME=library_app_db
+DB_USER=libraryuser
+DB_PASSWORD=change_this_password
+
+# Application Ports
+FRONTEND_PORT=3002
+BACKEND_PORT=5002
+
+# Flask Configuration
+SECRET_KEY=change-this-secret-key-to-something-secure
+FLASK_ENV=production
+
+# Azure AD Configuration (Optional - for authentication)
+AZURE_TENANT_ID=your-tenant-id
+AZURE_CLIENT_ID=your-client-id
+AZURE_REQUIRED_GROUP_ID=your-group-id

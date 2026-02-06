@@ -1,0 +1,75 @@
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:16
+    container_name: postgres_library_app
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - library_app_data:/var/lib/postgresql/data
+      - ./database/sql_init.sql:/docker-entrypoint-initdb.d/sql_init.sql
+      - ./backups:/backups  # Mount backup directory
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - library_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: library_app_backend
+    ports:
+      - "${BACKEND_PORT:-5002}:5002"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - BACKEND_PORT=5002
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_REQUIRED_GROUP_ID=${AZURE_REQUIRED_GROUP_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - library_network
+
+  # Frontend Web Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: library_app_frontend
+    ports:
+      - "${FRONTEND_PORT:-3002}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - library_network
+
+volumes:
+  library_app_data:
+    driver: local
+    name: library_app_data
+
+networks:
+  library_network:
+    driver: bridge
+    name: library_network

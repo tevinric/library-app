@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Form inputs */
+input, select, textarea {
+  @apply bg-gray-700 border-gray-600 text-white rounded-lg;
+}
+
+input:focus, select:focus, textarea:focus {
+  @apply border-primary-500 ring-1 ring-primary-500 outline-none;
+}
+
+/* Tables */
+table {
+  @apply w-full;
+}
+
+th {
+  @apply bg-gray-800 text-left px-4 py-3 text-gray-300 font-semibold;
+}
+
+td {
+  @apply px-4 py-3 border-t border-gray-700;
+}
+
+tr:hover td {
+  @apply bg-gray-800/50;
+}

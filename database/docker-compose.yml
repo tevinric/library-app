@@ -1,0 +1,25 @@
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_library_app
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - library_app_data:/var/lib/postgresql/data
+      - ./sql_init.sql:/docker-entrypoint-initdb.d/sql_init.sql
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    restart: unless-stopped
+    networks:
+      - library-app-network
+
+volumes:
+  library_app_data:
+    external: true
+
+networks:
+  library-app-network:
+    external: true
