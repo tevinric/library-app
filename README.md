@@ -97,10 +97,10 @@ docker volume create library_app_data
 
 Edit `.env` file:
 ```bash
-DB_NAME=library_app_db
-DB_USER=libraryuser
-DB_PASSWORD=your_secure_password
-SECRET_KEY=your_secret_key
+ZOELIBRARYAPP_DB_NAME=library_app_db
+ZOELIBRARYAPP_DB_USER=libraryuser
+ZOELIBRARYAPP_DB_PASSWORD=your_secure_password
+ZOELIBRARYAPP_SECRET_KEY=your_secret_key
 ```
 
 ### 3. Start Database

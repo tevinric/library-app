@@ -2,7 +2,7 @@ import os
 import multiprocessing
 
 # Server socket
-bind = f"0.0.0.0:{os.getenv('BACKEND_PORT', '5002')}"
+bind = f"0.0.0.0:{os.getenv('ZOELIBRARYAPP_BACKEND_PORT', '5002')}"
 backlog = 2048
 
 # Worker processes

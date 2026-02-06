@@ -16,13 +16,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+app.config['SECRET_KEY'] = os.getenv('ZOELIBRARYAPP_SECRET_KEY', 'dev-secret-key')
 
 # CORS Configuration
 CORS(app, resources={
     r"/api/*": {
         "origins": [
-            f"http://localhost:{os.getenv('FRONTEND_PORT', '3002')}",
+            f"http://localhost:{os.getenv('ZOELIBRARYAPP_FRONTEND_PORT', '3002')}",
             "http://localhost:3000",  # Development
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -37,11 +37,11 @@ CORS(app, resources={
 def get_db_connection():
     """Create and return a database connection with RealDictCursor."""
     return psycopg2.connect(
-        host=os.getenv('DB_HOST'),
-        port=os.getenv('DB_PORT'),
-        database=os.getenv('DB_NAME'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
+        host=os.getenv('ZOELIBRARYAPP_DB_HOST'),
+        port=os.getenv('ZOELIBRARYAPP_DB_PORT'),
+        database=os.getenv('ZOELIBRARYAPP_DB_NAME'),
+        user=os.getenv('ZOELIBRARYAPP_DB_USER'),
+        password=os.getenv('ZOELIBRARYAPP_DB_PASSWORD'),
         cursor_factory=RealDictCursor
     )
 
@@ -1349,5 +1349,5 @@ def internal_error(error):
 # =============================================================================
 
 if __name__ == '__main__':
-    port = int(os.getenv('BACKEND_PORT', 5002))
-    app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_ENV') == 'development')
+    port = int(os.getenv('ZOELIBRARYAPP_BACKEND_PORT', 5002))
+    app.run(host='0.0.0.0', port=port, debug=os.getenv('ZOELIBRARYAPP_FLASK_ENV') == 'development')

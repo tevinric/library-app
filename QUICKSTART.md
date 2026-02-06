@@ -44,14 +44,14 @@ The application is pre-configured for DEV mode. Just update database passwords:
 
 Edit `.env` file:
 ```bash
-DB_PASSWORD=your_secure_password
-SECRET_KEY=your_secret_key
+ZOELIBRARYAPP_DB_PASSWORD=your_secure_password
+ZOELIBRARYAPP_SECRET_KEY=your_secret_key
 ```
 
 Edit `frontend/.env` (already set to DEV mode by default):
 ```bash
-VITE_ENV_TYPE=DEV
-VITE_DEV_USER_EMAIL=dev@library.local
+VITE_ZOELIBRARYAPP_ENV_TYPE=DEV
+VITE_ZOELIBRARYAPP_DEV_USER_EMAIL=dev@library.local
 ```
 
 **For Production (Azure AD Authentication):**
@@ -218,8 +218,8 @@ curl -H "X-User-Email: test@example.com" http://localhost:5002/api/borrowers
 ### Port conflicts
 If ports 3002 or 5002 are in use, edit `.env`:
 ```bash
-FRONTEND_PORT=3003
-BACKEND_PORT=5003
+ZOELIBRARYAPP_FRONTEND_PORT=3003
+ZOELIBRARYAPP_BACKEND_PORT=5003
 ```
 Then restart: `docker-compose down && docker-compose up -d`
 

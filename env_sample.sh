@@ -1,16 +1,16 @@
 #!/bin/bash
 # Environment variables for development
 
-export DB_HOST=""
-export DB_PORT="5432"
-export DB_NAME=""
-export DB_USER=""
-export DB_PASSWORD=""
-export FRONTEND_PORT=3002
-export BACKEND_PORT=5002
-export SECRET_KEY=""
-#export FLASK_ENV="development"
-export FLASK_ENV=""
-export AZURE_TENANT_ID=""
-export AZURE_CLIENT_ID=""
-# export AZURE_REQUIRED_GROUP_ID="your-group-id"
+export ZOELIBRARYAPP_DB_HOST=""
+export ZOELIBRARYAPP_DB_PORT="5432"
+export ZOELIBRARYAPP_DB_NAME=""
+export ZOELIBRARYAPP_DB_USER=""
+export ZOELIBRARYAPP_DB_PASSWORD=""
+export ZOELIBRARYAPP_FRONTEND_PORT=3002
+export ZOELIBRARYAPP_BACKEND_PORT=5002
+export ZOELIBRARYAPP_SECRET_KEY=""
+#export ZOELIBRARYAPP_FLASK_ENV="development"
+export ZOELIBRARYAPP_FLASK_ENV=""
+export ZOELIBRARYAPP_AZURE_TENANT_ID=""
+export ZOELIBRARYAPP_AZURE_CLIENT_ID=""
+# export ZOELIBRARYAPP_AZURE_REQUIRED_GROUP_ID="your-group-id"

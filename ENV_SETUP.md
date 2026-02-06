@@ -2,15 +2,15 @@
 
 ## ENV_TYPE Variable
 
-The `VITE_ENV_TYPE` variable controls the authentication mode for the Library Management application.
+The `VITE_ZOELIBRARYAPP_ENV_TYPE` variable controls the authentication mode for the Library Management application.
 
 ### Configuration Options
 
 **Option 1: Development Mode (No Authentication Required)**
 ```bash
 # In frontend/.env
-VITE_ENV_TYPE=DEV
-VITE_DEV_USER_EMAIL=dev@library.local
+VITE_ZOELIBRARYAPP_ENV_TYPE=DEV
+VITE_ZOELIBRARYAPP_DEV_USER_EMAIL=dev@library.local
 ```
 
 - **Use When**: Local development, testing, demo purposes
@@ -27,11 +27,11 @@ VITE_DEV_USER_EMAIL=dev@library.local
 **Option 2: Production Mode (Azure AD Authentication)**
 ```bash
 # In frontend/.env
-VITE_ENV_TYPE=PROD
-VITE_AZURE_CLIENT_ID=your-azure-client-id
-VITE_AZURE_TENANT_ID=your-azure-tenant-id
-VITE_AZURE_REDIRECT_URI=http://localhost:3002
-VITE_AZURE_REQUIRED_GROUP_ID=your-security-group-id
+VITE_ZOELIBRARYAPP_ENV_TYPE=PROD
+VITE_ZOELIBRARYAPP_AZURE_CLIENT_ID=your-azure-client-id
+VITE_ZOELIBRARYAPP_AZURE_TENANT_ID=your-azure-tenant-id
+VITE_ZOELIBRARYAPP_AZURE_REDIRECT_URI=http://localhost:3002
+VITE_ZOELIBRARYAPP_AZURE_REQUIRED_GROUP_ID=your-security-group-id
 ```
 
 - **Use When**: Production deployment, team access control
@@ -51,10 +51,10 @@ VITE_AZURE_REQUIRED_GROUP_ID=your-security-group-id
 
 1. Edit `frontend/.env`:
 ```bash
-VITE_ENV_TYPE=DEV
-VITE_DEV_USER_EMAIL=dev@library.local
-VITE_API_URL=http://localhost:5002
-VITE_DEV_PORT=3000
+VITE_ZOELIBRARYAPP_ENV_TYPE=DEV
+VITE_ZOELIBRARYAPP_DEV_USER_EMAIL=dev@library.local
+VITE_ZOELIBRARYAPP_API_URL=http://localhost:5002
+VITE_ZOELIBRARYAPP_DEV_PORT=3000
 ```
 
 2. Start the application:
@@ -87,11 +87,11 @@ VITE_DEV_PORT=3000
 
 4. Update `frontend/.env`:
 ```bash
-VITE_ENV_TYPE=PROD
-VITE_AZURE_CLIENT_ID=<your-client-id>
-VITE_AZURE_TENANT_ID=<your-tenant-id>
-VITE_AZURE_REDIRECT_URI=https://your-domain.com
-VITE_AZURE_REQUIRED_GROUP_ID=<your-group-object-id>
+VITE_ZOELIBRARYAPP_ENV_TYPE=PROD
+VITE_ZOELIBRARYAPP_AZURE_CLIENT_ID=<your-client-id>
+VITE_ZOELIBRARYAPP_AZURE_TENANT_ID=<your-tenant-id>
+VITE_ZOELIBRARYAPP_AZURE_REDIRECT_URI=https://your-domain.com
+VITE_ZOELIBRARYAPP_AZURE_REQUIRED_GROUP_ID=<your-group-object-id>
 ```
 
 5. Rebuild and deploy:
@@ -105,19 +105,19 @@ docker-compose up -d
 ### Required for DEV Mode
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_ENV_TYPE` | Environment type | `DEV` |
-| `VITE_DEV_USER_EMAIL` | Dev user email | `dev@library.local` |
-| `VITE_API_URL` | Backend API URL | `http://localhost:5002` |
+| `VITE_ZOELIBRARYAPP_ENV_TYPE` | Environment type | `DEV` |
+| `VITE_ZOELIBRARYAPP_DEV_USER_EMAIL` | Dev user email | `dev@library.local` |
+| `VITE_ZOELIBRARYAPP_API_URL` | Backend API URL | `http://localhost:5002` |
 
 ### Required for PROD Mode
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_ENV_TYPE` | Environment type | `PROD` |
-| `VITE_AZURE_CLIENT_ID` | Azure AD App Client ID | `abc123...` |
-| `VITE_AZURE_TENANT_ID` | Azure AD Tenant ID | `def456...` |
-| `VITE_AZURE_REDIRECT_URI` | OAuth redirect URI | `https://app.com` |
-| `VITE_AZURE_REQUIRED_GROUP_ID` | Security group Object ID | `ghi789...` |
-| `VITE_API_URL` | Backend API URL | `https://api.app.com` |
+| `VITE_ZOELIBRARYAPP_ENV_TYPE` | Environment type | `PROD` |
+| `VITE_ZOELIBRARYAPP_AZURE_CLIENT_ID` | Azure AD App Client ID | `abc123...` |
+| `VITE_ZOELIBRARYAPP_AZURE_TENANT_ID` | Azure AD Tenant ID | `def456...` |
+| `VITE_ZOELIBRARYAPP_AZURE_REDIRECT_URI` | OAuth redirect URI | `https://app.com` |
+| `VITE_ZOELIBRARYAPP_AZURE_REQUIRED_GROUP_ID` | Security group Object ID | `ghi789...` |
+| `VITE_ZOELIBRARYAPP_API_URL` | Backend API URL | `https://api.app.com` |
 
 ## Visual Indicators
 
@@ -137,7 +137,7 @@ docker-compose up -d
 
 ### From PROD to DEV
 1. Edit `frontend/.env`
-2. Change `VITE_ENV_TYPE=PROD` to `VITE_ENV_TYPE=DEV`
+2. Change `VITE_ZOELIBRARYAPP_ENV_TYPE=PROD` to `VITE_ZOELIBRARYAPP_ENV_TYPE=DEV`
 3. Rebuild frontend:
 ```bash
 cd frontend
@@ -151,7 +151,7 @@ docker-compose restart frontend
 ### From DEV to PROD
 1. Ensure Azure AD is configured (see Production Deployment above)
 2. Edit `frontend/.env`
-3. Change `VITE_ENV_TYPE=DEV` to `VITE_ENV_TYPE=PROD`
+3. Change `VITE_ZOELIBRARYAPP_ENV_TYPE=DEV` to `VITE_ZOELIBRARYAPP_ENV_TYPE=PROD`
 4. Fill in all Azure variables
 5. Rebuild frontend (same as above)
 
@@ -242,7 +242,7 @@ console.log(localStorage.getItem('userEmail'))
 ### Local Development Workflow
 ```bash
 # 1. Set to DEV mode
-echo "VITE_ENV_TYPE=DEV" > frontend/.env
+echo "VITE_ZOELIBRARYAPP_ENV_TYPE=DEV" > frontend/.env
 
 # 2. Start services
 ./setup.sh
@@ -262,7 +262,7 @@ echo "VITE_ENV_TYPE=DEV" > frontend/.env
 
 # 2. Set to PROD mode
 # Update frontend/.env with Azure credentials
-VITE_ENV_TYPE=PROD
+VITE_ZOELIBRARYAPP_ENV_TYPE=PROD
 
 # 3. Build and deploy
 docker-compose build

@@ -4,14 +4,14 @@ services:
     image: postgres:16
     container_name: postgres_library_app
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${ZOELIBRARYAPP_DB_NAME}
+      POSTGRES_USER: ${ZOELIBRARYAPP_DB_USER}
+      POSTGRES_PASSWORD: ${ZOELIBRARYAPP_DB_PASSWORD}
     volumes:
       - library_app_data:/var/lib/postgresql/data
       - ./sql_init.sql:/docker-entrypoint-initdb.d/sql_init.sql
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${ZOELIBRARYAPP_DB_PORT:-5432}:5432"
     restart: unless-stopped
     networks:
       - library-app-network

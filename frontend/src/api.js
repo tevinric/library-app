@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5002'),
+  baseURL: import.meta.env.PROD ? '' : (import.meta.env.VITE_ZOELIBRARYAPP_API_URL || 'http://localhost:5002'),
 })
 
 // Request interceptor to add auth header

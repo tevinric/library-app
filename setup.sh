@@ -48,12 +48,12 @@ echo ""
 if [ ! -f .env ]; then
     echo "⚠️  .env file not found!"
     echo "Please create .env file with the following variables:"
-    echo "  DB_NAME=library_app_db"
-    echo "  DB_USER=libraryuser"
-    echo "  DB_PASSWORD=your_password"
-    echo "  SECRET_KEY=your_secret_key"
-    echo "  FRONTEND_PORT=3002"
-    echo "  BACKEND_PORT=5002"
+    echo "  ZOELIBRARYAPP_DB_NAME=library_app_db"
+    echo "  ZOELIBRARYAPP_DB_USER=libraryuser"
+    echo "  ZOELIBRARYAPP_DB_PASSWORD=your_password"
+    echo "  ZOELIBRARYAPP_SECRET_KEY=your_secret_key"
+    echo "  ZOELIBRARYAPP_FRONTEND_PORT=3002"
+    echo "  ZOELIBRARYAPP_BACKEND_PORT=5002"
     exit 1
 fi
 

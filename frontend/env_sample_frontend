@@ -1,0 +1,21 @@
+# Environment Type (DEV or PROD)
+# DEV = Bypass authentication, PROD = Use Azure AD
+VITE_ZOELIBRARYAPP_ENV_TYPE=PROD
+
+# Azure AD Configuration (only needed if ENV_TYPE=PROD)
+VITE_ZOELIBRARYAPP_AZURE_CLIENT_ID=
+VITE_ZOELIBRARYAPP_AZURE_TENANT_ID=
+VITE_ZOELIBRARYAPP_AZURE_REDIRECT_URI=http://localhost:3002
+VITE_ZOELIBRARYAPP_AZURE_POST_LOGOUT_REDIRECT_URI=http://localhost:3002
+# VITE_ZOELIBRARYAPP_AZURE_REQUIRED_GROUP_ID=your-group-id
+
+# API Configuration (for development)
+VITE_ZOELIBRARYAPP_API_URL=http://localhost:5002
+
+# Development Port
+VITE_ZOELIBRARYAPP_DEV_PORT=3002
+
+# Development User Email (only used if ENV_TYPE=DEV)
+VITE_ZOELIBRARYAPP_DEV_USER_EMAIL=dev@library.local
+
+

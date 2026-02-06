@@ -16,9 +16,9 @@ import FollowUps from './pages/FollowUps'
 import './App.css'
 
 // Check if we're in development mode
-const ENV_TYPE = import.meta.env.VITE_ENV_TYPE || 'PROD'
+const ENV_TYPE = import.meta.env.VITE_ZOELIBRARYAPP_ENV_TYPE || 'PROD'
 const IS_DEV_MODE = ENV_TYPE === 'DEV'
-const DEV_USER_EMAIL = import.meta.env.VITE_DEV_USER_EMAIL || 'dev@library.local'
+const DEV_USER_EMAIL = import.meta.env.VITE_ZOELIBRARYAPP_DEV_USER_EMAIL || 'dev@library.local'
 
 function App() {
   const { instance, accounts, inProgress } = useMsal()
