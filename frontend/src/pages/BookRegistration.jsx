@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { getBooks, createBook, createBookCopy, getBookCopies } from '../api'
+import { getBooks, createBook, createBookCopy, getBookCopies, getBookByBarcode } from '../api'
+import BarcodeScanner from '../components/BarcodeScanner'
 
 function BookRegistration() {
   const [search, setSearch] = useState('')
@@ -10,6 +11,7 @@ function BookRegistration() {
     title: '',
     author: '',
     isbn: '',
+    barcode: '',
     publisher: '',
     publication_year: '',
     genre: '',
@@ -60,6 +62,7 @@ function BookRegistration() {
         title: '',
         author: '',
         isbn: '',
+        barcode: '',
         publisher: '',
         publication_year: '',
         genre: '',
@@ -106,12 +109,56 @@ function BookRegistration() {
     }
   }
 
+  const handleBarcodeScan = async (barcode) => {
+    try {
+      setLoading(true)
+      const response = await getBookByBarcode(barcode)
+
+      // Book found - show in search results
+      setBooks([response.data])
+      setSearch('') // Clear search to prevent re-triggering
+      alert('Book found! You can view or add more copies below.')
+
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // Book not found - pre-fill form with barcode for new registration
+        setFormData({
+          ...formData,
+          barcode
+          // Note: ISBN and barcode are separate fields, not pre-filling ISBN
+        })
+        setShowForm(true)
+        alert('Book not found in system. Register it below with this barcode.')
+      } else {
+        alert('Error searching by barcode: ' + error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Register Books</h1>
         <p className="text-gray-400 mt-1">Search existing books or register new ones</p>
+      </div>
+
+      {/* Barcode Scanner */}
+      <div className="card">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Quick Lookup: Scan Barcode
+        </label>
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          placeholder="Scan book barcode here..."
+          autoFocus={true}
+          disabled={loading}
+        />
+        <p className="text-xs text-gray-500 mt-2">
+          Scan a barcode to search for existing books or start registration for new ones
+        </p>
       </div>
 
       {/* Search Bar */}
@@ -252,6 +299,23 @@ function BookRegistration() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Barcode
+                </label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={formData.barcode}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2"
+                  placeholder="ISBN, UPC, or custom barcode"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional: Can be same as ISBN or a custom barcode
+                </p>
               </div>
 
               <div>

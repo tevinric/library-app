@@ -40,6 +40,7 @@ export const getCurrentUser = () => api.get('/api/user')
 // Books
 export const getBooks = (search = '') => api.get('/api/books', { params: { search } })
 export const getBook = (id) => api.get(`/api/books/${id}`)
+export const getBookByBarcode = (barcode) => api.get(`/api/books/by-barcode/${barcode}`)
 export const createBook = (data) => api.post('/api/books', data)
 export const updateBook = (id, data) => api.put(`/api/books/${id}`, data)
 export const deleteBook = (id) => api.delete(`/api/books/${id}`)

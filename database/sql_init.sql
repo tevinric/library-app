@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS books (
     title VARCHAR(500) NOT NULL,
     author VARCHAR(255) NOT NULL,
     isbn VARCHAR(50),
+    barcode VARCHAR(100),
     publisher VARCHAR(255),
     publication_year INT,
     genre VARCHAR(100),
@@ -86,6 +87,10 @@ CREATE INDEX IF NOT EXISTS idx_books_user_id ON books(user_id);
 CREATE INDEX IF NOT EXISTS idx_books_title ON books(title);
 CREATE INDEX IF NOT EXISTS idx_books_author ON books(author);
 CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn);
+CREATE INDEX IF NOT EXISTS idx_books_barcode ON books(barcode);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_books_barcode_unique ON books(barcode) WHERE barcode IS NOT NULL;
+
+COMMENT ON COLUMN books.barcode IS 'Barcode identifier (ISBN, UPC, EAN, or custom barcode). Used for scanner integration during book registration, checkout, and check-in operations.';
 
 -- =============================================================================
 -- BOOK COPIES TABLE (Individual physical copies)

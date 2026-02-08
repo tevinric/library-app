@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { getBooks, getBookCopies, updateBook, createBookCopy, createWishlistItem, createFollowUp } from '../api'
+import { getBooks, getBookCopies, updateBook, createBookCopy, createWishlistItem, createFollowUp, getBookByBarcode } from '../api'
 import { formatDistanceToNow } from 'date-fns'
+import BarcodeScanner from '../components/BarcodeScanner'
 
 function BookSearch() {
   const [search, setSearch] = useState('')
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedBookId, setSelectedBookId] = useState(null)
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(true)
   const [copies, setCopies] = useState([])
   const [showWishlistModal, setShowWishlistModal] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
@@ -165,6 +167,32 @@ function BookSearch() {
     setShowCheckoutModal(true)
   }
 
+  const handleBarcodeScan = async (barcode) => {
+    try {
+      setLoading(true)
+      const response = await getBookByBarcode(barcode)
+      const book = response.data
+
+      // Display the found book with full details
+      setBooks([book])
+      setShowBarcodeScanner(false)
+
+      // Auto-expand copies to show detailed information
+      if (book.id) {
+        await loadCopies(book.id)
+      }
+
+    } catch (error) {
+      if (error.response?.status === 404) {
+        alert('Book not found. Please check the barcode or register the book first.')
+      } else {
+        alert('Error scanning barcode: ' + error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -173,20 +201,53 @@ function BookSearch() {
         <p className="text-gray-400 mt-1">Search for books and check availability</p>
       </div>
 
+      {/* Barcode Scanner */}
+      {showBarcodeScanner && (
+        <div className="card">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Quick Search: Scan Barcode
+          </label>
+          <BarcodeScanner
+            onScan={handleBarcodeScan}
+            placeholder="Scan book barcode..."
+            autoFocus={true}
+            disabled={loading}
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            Fastest method: Scan barcode to instantly find the book with full details
+          </p>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="card">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          {showBarcodeScanner ? 'Or search manually' : 'Search Books'}
+        </label>
         <div className="flex gap-4">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, author, or ISBN..."
+            placeholder="Search by title, author, ISBN, or barcode..."
             className="flex-1 px-4 py-2"
             onKeyPress={(e) => e.key === 'Enter' && loadBooks()}
           />
           <button onClick={loadBooks} className="btn-primary">
             🔍 Search
           </button>
+          {!showBarcodeScanner && (
+            <button
+              onClick={() => {
+                setShowBarcodeScanner(true)
+                setBooks([])
+                setSearch('')
+              }}
+              className="btn-secondary"
+            >
+              📷 Scan Barcode
+            </button>
+          )}
           <button
             onClick={() => setShowWishlistModal(true)}
             className="btn-secondary"
@@ -209,9 +270,14 @@ function BookSearch() {
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
-                    {book.isbn && <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>}
-                    {book.publisher && <p className="text-sm text-gray-500">Publisher: {book.publisher}</p>}
-                    {book.publication_year && <p className="text-sm text-gray-500">Year: {book.publication_year}</p>}
+                    <div className="mt-2 space-y-1">
+                      {book.isbn && <p className="text-sm text-gray-500">📚 ISBN: {book.isbn}</p>}
+                      {book.barcode && <p className="text-sm text-gray-500">🔖 Barcode: {book.barcode}</p>}
+                      {book.publisher && <p className="text-sm text-gray-500">🏢 Publisher: {book.publisher}</p>}
+                      {book.publication_year && <p className="text-sm text-gray-500">📅 Year: {book.publication_year}</p>}
+                      {book.language && book.language !== 'English' && <p className="text-sm text-gray-500">🌐 Language: {book.language}</p>}
+                      {book.pages && <p className="text-sm text-gray-500">📄 Pages: {book.pages}</p>}
+                    </div>
                     {book.genre && <span className="inline-block px-2 py-1 bg-primary-900/50 text-primary-300 text-xs rounded mt-2">{book.genre}</span>}
                   </div>
                   <div className="text-right">
@@ -248,36 +314,56 @@ function BookSearch() {
                 {/* Copies List */}
                 {selectedBookId === book.id && (
                   <div className="mt-4 border-t border-gray-600 pt-4">
-                    <h4 className="font-semibold text-white mb-3">Copies ({copies.length})</h4>
+                    <h4 className="font-semibold text-white mb-3">
+                      Copies ({copies.length})
+                      {copies.filter(c => c.status === 'Available').length > 0 && (
+                        <span className="ml-2 text-sm text-success-400">
+                          • {copies.filter(c => c.status === 'Available').length} Available
+                        </span>
+                      )}
+                    </h4>
                     {copies.length === 0 ? (
                       <p className="text-gray-400 text-sm">No copies available</p>
                     ) : (
                       <div className="space-y-2">
                         {copies.map((copy) => (
-                          <div key={copy.id} className="bg-gray-800 p-3 rounded-lg">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="text-white font-medium">Copy #{copy.copy_number}</span>
-                                <span className="ml-3 text-sm text-gray-400">Condition: {copy.condition}</span>
-                                {copy.location && <span className="ml-3 text-sm text-gray-400">Location: {copy.location}</span>}
+                          <div key={copy.id} className="bg-gray-800 p-4 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-white font-medium">Copy #{copy.copy_number}</span>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                    copy.status === 'Available'
+                                      ? 'bg-success-900/50 text-success-300'
+                                      : 'bg-warning-900/50 text-warning-300'
+                                  }`}>
+                                    {copy.status}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-sm">
+                                  <p className="text-gray-400">
+                                    <span className="text-gray-500">Condition:</span> {copy.condition}
+                                  </p>
+                                  {copy.location && (
+                                    <p className="text-gray-400">
+                                      <span className="text-gray-500">📍 Location:</span> <span className="text-primary-400 font-medium">{copy.location}</span>
+                                    </p>
+                                  )}
+                                  {copy.notes && (
+                                    <p className="text-gray-400">
+                                      <span className="text-gray-500">Notes:</span> {copy.notes}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                  copy.status === 'Available'
-                                    ? 'bg-success-900/50 text-success-300'
-                                    : 'bg-warning-900/50 text-warning-300'
-                                }`}>
-                                  {copy.status}
-                                </span>
-                                {copy.checkout_info && (
-                                  <button
-                                    onClick={() => showCheckoutDetails(copy.checkout_info)}
-                                    className="text-primary-400 hover:text-primary-300 text-sm underline"
-                                  >
-                                    View Details
-                                  </button>
-                                )}
-                              </div>
+                              {copy.checkout_info && (
+                                <button
+                                  onClick={() => showCheckoutDetails(copy.checkout_info)}
+                                  className="text-primary-400 hover:text-primary-300 text-sm underline ml-4"
+                                >
+                                  View Checkout Details
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}

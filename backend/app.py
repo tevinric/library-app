@@ -169,10 +169,11 @@ def get_books():
                 WHERE b.user_id = %s
                   AND (LOWER(b.title) LIKE LOWER(%s)
                        OR LOWER(b.author) LIKE LOWER(%s)
-                       OR LOWER(b.isbn) LIKE LOWER(%s))
+                       OR LOWER(b.isbn) LIKE LOWER(%s)
+                       OR LOWER(b.barcode) LIKE LOWER(%s))
                 GROUP BY b.id
                 ORDER BY b.title ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%'))
+            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT b.*,
@@ -236,15 +237,16 @@ def create_book():
         cur = conn.cursor()
 
         cur.execute('''
-            INSERT INTO books (user_id, title, author, isbn, publisher, publication_year,
+            INSERT INTO books (user_id, title, author, isbn, barcode, publisher, publication_year,
                              genre, description, language, pages)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         ''', (
             str(g.user_id),
             data.get('title'),
             data.get('author'),
             sanitize_input(data.get('isbn')),
+            sanitize_input(data.get('barcode')),
             sanitize_input(data.get('publisher')),
             sanitize_input(data.get('publication_year'), 'int'),
             sanitize_input(data.get('genre')),
@@ -275,7 +277,7 @@ def update_book(book_id):
 
         cur.execute('''
             UPDATE books
-            SET title = %s, author = %s, isbn = %s, publisher = %s,
+            SET title = %s, author = %s, isbn = %s, barcode = %s, publisher = %s,
                 publication_year = %s, genre = %s, description = %s,
                 language = %s, pages = %s
             WHERE id = %s AND user_id = %s
@@ -284,6 +286,7 @@ def update_book(book_id):
             data.get('title'),
             data.get('author'),
             sanitize_input(data.get('isbn')),
+            sanitize_input(data.get('barcode')),
             sanitize_input(data.get('publisher')),
             sanitize_input(data.get('publication_year'), 'int'),
             sanitize_input(data.get('genre')),
@@ -334,6 +337,47 @@ def delete_book(book_id):
 
     except Exception as e:
         logger.error(f"Error deleting book: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/books/by-barcode/<barcode>', methods=['GET'])
+@token_required
+def get_book_by_barcode(barcode):
+    """Get book by barcode with copy availability information."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            SELECT b.*,
+                   COUNT(DISTINCT bc.id) as total_copies,
+                   COUNT(DISTINCT CASE WHEN bc.status = 'Available'
+                         THEN bc.id END) as available_copies,
+                   json_agg(
+                       json_build_object(
+                           'id', bc.id,
+                           'copy_number', bc.copy_number,
+                           'status', bc.status,
+                           'condition', bc.condition,
+                           'location', bc.location
+                       ) ORDER BY bc.copy_number
+                   ) FILTER (WHERE bc.id IS NOT NULL) as copies
+            FROM books b
+            LEFT JOIN book_copies bc ON b.id = bc.book_id
+            WHERE b.barcode = %s AND b.user_id = %s
+            GROUP BY b.id
+        ''', (barcode, str(g.user_id)))
+
+        book = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+
+        return jsonify(book)
+
+    except Exception as e:
+        logger.error(f"Error fetching book by barcode: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # =============================================================================
@@ -733,8 +777,8 @@ def get_checkouts():
         if search:
             cur.execute('''
                 SELECT co.*,
-                       b.title, b.author,
-                       bc.copy_number,
+                       b.title, b.author, b.isbn, b.barcode,
+                       bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
                        br.first_name, br.last_name, br.email, br.phone,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co
@@ -744,14 +788,15 @@ def get_checkouts():
                 WHERE co.user_id = %s AND co.status = 'Checked Out'
                   AND (LOWER(b.title) LIKE LOWER(%s)
                        OR LOWER(br.first_name) LIKE LOWER(%s)
-                       OR LOWER(br.last_name) LIKE LOWER(%s))
+                       OR LOWER(br.last_name) LIKE LOWER(%s)
+                       OR b.barcode LIKE %s)
                 ORDER BY co.checkout_date ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%'))
+            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT co.*,
-                       b.title, b.author,
-                       bc.copy_number,
+                       b.title, b.author, b.isbn, b.barcode,
+                       bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
                        br.first_name, br.last_name, br.email, br.phone,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co

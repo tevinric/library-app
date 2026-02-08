@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { getBooks, getBookCopies, autocompleteBorrowers, createBorrower, createCheckout } from '../api'
+import { getBooks, getBookCopies, autocompleteBorrowers, createBorrower, createCheckout, getBookByBarcode } from '../api'
+import BarcodeScanner from '../components/BarcodeScanner'
 
 function CheckoutBooks() {
   const [step, setStep] = useState(1)
@@ -12,6 +13,7 @@ function CheckoutBooks() {
   const [borrowerSuggestions, setBorrowerSuggestions] = useState([])
   const [selectedBorrower, setSelectedBorrower] = useState(null)
   const [showNewBorrowerForm, setShowNewBorrowerForm] = useState(false)
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(true)
   const [loading, setLoading] = useState(false)
   const [checkoutData, setCheckoutData] = useState({
     due_days: 14,
@@ -66,6 +68,46 @@ function CheckoutBooks() {
     setStep(3)
   }
 
+  const handleBarcodeScan = async (barcode) => {
+    try {
+      setLoading(true)
+      const response = await getBookByBarcode(barcode)
+      const book = response.data
+
+      if (book.available_copies === 0) {
+        alert('No available copies of this book')
+        return
+      }
+
+      // Get available copies
+      const availableCopies = book.copies?.filter(c => c.status === 'Available') || []
+
+      if (availableCopies.length === 1) {
+        // Auto-select the single available copy and skip to borrower selection
+        setSelectedBook(book)
+        setCopies(availableCopies)
+        setSelectedCopy(availableCopies[0])
+        setStep(3)
+        setShowBarcodeScanner(false)
+      } else {
+        // Multiple copies available - show selection
+        setSelectedBook(book)
+        setCopies(availableCopies)
+        setStep(2)
+        setShowBarcodeScanner(false)
+      }
+
+    } catch (error) {
+      if (error.response?.status === 404) {
+        alert('Book not found. Please register it first.')
+      } else {
+        alert('Error scanning barcode: ' + error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const searchBorrowers = async () => {
     try {
       const response = await autocompleteBorrowers(borrowerSearch)
@@ -115,6 +157,7 @@ function CheckoutBooks() {
       setSelectedCopy(null)
       setBorrowerSearch('')
       setSelectedBorrower(null)
+      setShowBarcodeScanner(true)
       setCheckoutData({ due_days: 14, notes: '' })
     } catch (error) {
       alert('Error checking out book: ' + error.message)
@@ -153,26 +196,58 @@ function CheckoutBooks() {
       {step === 1 && (
         <div className="card">
           <h2 className="text-xl font-semibold text-white mb-4">Search for Book</h2>
-          <div className="flex gap-4 mb-4">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by title, author, or ISBN..."
-              className="flex-1 px-4 py-2"
-              onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
-            />
-            <button onClick={searchBooks} className="btn-primary">Search</button>
+
+          {/* Barcode Scanner Section */}
+          {showBarcodeScanner && (
+            <div className="mb-6 pb-6 border-b border-gray-600">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Quick Checkout: Scan Barcode
+              </label>
+              <BarcodeScanner
+                onScan={handleBarcodeScan}
+                placeholder="Scan book barcode..."
+                autoFocus={true}
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Fastest method: Scan barcode to instantly find the book
+              </p>
+            </div>
+          )}
+
+          {/* Manual Search Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Or search manually
+            </label>
+            <div className="flex gap-4 mb-4">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by title, author, ISBN, or barcode..."
+                className="flex-1 px-4 py-2"
+                onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
+              />
+              <button onClick={searchBooks} className="btn-primary">Search</button>
+            </div>
           </div>
 
           {books.length > 0 && (
             <div className="space-y-3">
               {books.map((book) => (
-                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
-                  <div>
+                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-start">
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
-                    <span className="text-sm text-success-400">{book.available_copies} available</span>
+                    <div className="mt-2 space-y-1">
+                      {book.isbn && <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>}
+                      {book.barcode && <p className="text-sm text-gray-500">Barcode: {book.barcode}</p>}
+                      <p className="text-sm">
+                        <span className="text-success-400 font-medium">{book.available_copies} available</span>
+                        <span className="text-gray-500"> of {book.total_copies} total</span>
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => selectBook(book)}
@@ -191,20 +266,44 @@ function CheckoutBooks() {
       {/* Step 2: Select Copy */}
       {step === 2 && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">Select Copy of "{selectedBook?.title}"</h2>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-white">Select Copy of "{selectedBook?.title}"</h2>
+            <p className="text-gray-400 text-sm mt-1">by {selectedBook?.author}</p>
+            {selectedBook?.isbn && <p className="text-gray-500 text-sm">ISBN: {selectedBook.isbn}</p>}
+            {selectedBook?.barcode && <p className="text-gray-500 text-sm">Barcode: {selectedBook.barcode}</p>}
+          </div>
+
           <div className="space-y-3">
             {copies.map((copy) => (
-              <div key={copy.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
-                <div>
-                  <p className="text-white font-medium">Copy #{copy.copy_number}</p>
-                  <p className="text-gray-400 text-sm">Condition: {copy.condition}</p>
-                  {copy.location && <p className="text-gray-400 text-sm">Location: {copy.location}</p>}
+              <div key={copy.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-white font-medium">Copy #{copy.copy_number}</p>
+                    <span className="px-2 py-1 bg-success-900/50 text-success-300 text-xs rounded-full">
+                      {copy.status}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-gray-400">
+                      <span className="text-gray-500">Condition:</span> {copy.condition}
+                    </p>
+                    {copy.location && (
+                      <p className="text-gray-400">
+                        <span className="text-gray-500">📍 Location:</span> <span className="text-primary-400 font-medium">{copy.location}</span>
+                      </p>
+                    )}
+                    {copy.notes && (
+                      <p className="text-gray-400 text-xs">
+                        <span className="text-gray-500">Notes:</span> {copy.notes}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <button onClick={() => selectCopy(copy)} className="btn-primary">Select</button>
+                <button onClick={() => selectCopy(copy)} className="btn-primary ml-4">Select</button>
               </div>
             ))}
           </div>
-          <button onClick={() => setStep(1)} className="btn-secondary mt-4">← Back</button>
+          <button onClick={() => { setStep(1); setShowBarcodeScanner(true); }} className="btn-secondary mt-4">← Back</button>
         </div>
       )}
 
@@ -280,7 +379,7 @@ function CheckoutBooks() {
             >
               + New Borrower
             </button>
-            <button onClick={() => setStep(2)} className="btn-secondary">← Back</button>
+            <button onClick={() => { setStep(2); }} className="btn-secondary">← Back</button>
           </div>
         </div>
       )}
