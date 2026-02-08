@@ -99,9 +99,12 @@ rclone lsd gdrive_backup:
 ### 1. Create Backup Script File
 
 ```bash
+# Navigate to your library-app project directory
+cd library-app
+
 # Create scripts directory
-mkdir -p ~/library_app/scripts
-cd ~/library_app/scripts
+mkdir -p scripts
+cd scripts
 
 # Create backup script
 nano postgresql_backup.sh
@@ -119,15 +122,42 @@ Copy and paste the following script:
 # Backs up PostgreSQL database from Docker container to Google Drive via rclone
 ################################################################################
 
+# Exit on any error
+set -euo pipefail
+
+# Detect script directory and calculate project root if not already set
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DETECTED_PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Try to load environment variables from .env or env.sh
+if [ -f "$DETECTED_PROJECT_ROOT/.env" ]; then
+    set -a
+    source "$DETECTED_PROJECT_ROOT/.env"
+    set +a
+    echo "Loaded environment from .env"
+elif [ -f "$DETECTED_PROJECT_ROOT/env.sh" ]; then
+    source "$DETECTED_PROJECT_ROOT/env.sh"
+    echo "Loaded environment from env.sh"
+else
+    echo "WARNING: No .env or env.sh file found at $DETECTED_PROJECT_ROOT"
+fi
+
+# Use PROJECT_ROOT from env.sh if set, otherwise use detected path
+PROJECT_ROOT="${PROJECT_ROOT:-$DETECTED_PROJECT_ROOT}"
+echo "Project root: $PROJECT_ROOT"
+
 # Configuration
 CONTAINER_NAME="postgres_library_app"
-DB_NAME="library_app_db"
-DB_USER="libraryuser"
-BACKUP_DIR="/home/$USER/library_app/backups"
+DB_NAME=${ZOELIBRARYAPP_DB_NAME:-}
+DB_USER=${ZOELIBRARYAPP_DB_USER:-}
+BACKUP_DIR="$PROJECT_ROOT/backups"
 RCLONE_REMOTE="gdrive_backup:LibraryApp_Backups"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="library_app_backup_${TIMESTAMP}.sql"
 BACKUP_FILE_GZ="${BACKUP_FILE}.gz"
+
+# Create backup directory first
+mkdir -p "$BACKUP_DIR"
 LOG_FILE="$BACKUP_DIR/backup_log.txt"
 
 # Color codes for output
@@ -162,16 +192,25 @@ log_message "========================================="
 log_message "Starting backup process"
 print_info "Starting PostgreSQL backup..."
 
+# Validate required environment variables
+if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ]; then
+    print_error "Missing required environment variables!"
+    print_error "Please ensure ZOELIBRARYAPP_DB_NAME and ZOELIBRARYAPP_DB_USER are set."
+    print_error "Check your .env file at: $PROJECT_ROOT/.env"
+    exit 1
+fi
+
+print_info "Database: $DB_NAME"
+print_info "User: $DB_USER"
+
 # Check if container is running
 if ! docker ps | grep -q "$CONTAINER_NAME"; then
     print_error "PostgreSQL container '$CONTAINER_NAME' is not running!"
+    print_error "Start it with: docker-compose up -d"
     exit 1
 fi
 
 print_success "PostgreSQL container is running"
-
-# Create backup directory if it doesn't exist
-mkdir -p "$BACKUP_DIR"
 
 # Create database dump
 print_info "Creating database dump..."
@@ -242,17 +281,26 @@ print_info "Location: Google Drive -> LibraryApp_Backups"
 echo "==========================================" >> "$LOG_FILE"
 echo "" >> "$LOG_FILE"
 
-exit 0
+# Upload log file to Google Drive
+print_info "Uploading log file to Google Drive..."
+if rclone copy "$LOG_FILE" "$RCLONE_REMOTE/logs/"; then
+    print_success "Log file uploaded to Google Drive (LibraryApp_Backups/logs/)"
+else
+    print_error "Failed to upload log file to Google Drive"
+fi
 ```
 
 ### 3. Make Script Executable
 
 ```bash
+# From the library-app directory
+cd library-app
+
 # Make script executable
-chmod +x ~/library_app/scripts/postgresql_backup.sh
+chmod +x scripts/postgresql_backup.sh
 
 # Verify permissions
-ls -l ~/library_app/scripts/postgresql_backup.sh
+ls -l scripts/postgresql_backup.sh
 
 # Expected output: -rwxr-xr-x ... postgresql_backup.sh
 ```
@@ -264,12 +312,14 @@ ls -l ~/library_app/scripts/postgresql_backup.sh
 ### 1. Run Backup Script Manually
 
 ```bash
-# Navigate to scripts directory
-cd ~/library_app/scripts
+# Navigate to library-app directory
+cd library-app
 
-# Run backup script
-./postgresql_backup.sh
+# Run backup script (DO NOT use 'source' or '.' - this will close your terminal!)
+./scripts/postgresql_backup.sh
 ```
+
+**IMPORTANT:** Always run the script with `./postgresql_backup.sh`. Never use `source ./postgresql_backup.sh` or `. ./postgresql_backup.sh` as this will cause your terminal to close if the script encounters an error.
 
 **Expected Output:**
 ```
@@ -288,6 +338,8 @@ cd ~/library_app/scripts
 ℹ Cleaning up old local backups (older than 7 days)...
 ✓ Old local backups cleaned up
 ✓ Backup process completed!
+ℹ Uploading log file to Google Drive...
+✓ Log file uploaded to Google Drive (LibraryApp_Backups/logs/)
 ```
 
 ### 2. Verify Backup on Google Drive
@@ -313,16 +365,38 @@ head -n 20 /tmp/library_app_backup_20260206_143022.sql
 
 ### 3. Check Backup Logs
 
+**Local Logs:**
 ```bash
+# From the library-app directory
+cd library-app
+
 # View backup log
-cat ~/library_app/backups/backup_log.txt
+cat backups/backup_log.txt
 
 # View last 50 lines of log
-tail -n 50 ~/library_app/backups/backup_log.txt
+tail -n 50 backups/backup_log.txt
 
 # Monitor log in real-time (during backup)
-tail -f ~/library_app/backups/backup_log.txt
+tail -f backups/backup_log.txt
 ```
+
+**Google Drive Logs:**
+
+The backup script automatically uploads the log file to Google Drive after each run. Logs are stored in the `logs` subfolder inside the backup folder.
+
+```bash
+# List log files on Google Drive
+rclone lsl gdrive_backup:LibraryApp_Backups/logs/
+
+# Download the log file from Google Drive to view it
+rclone copy gdrive_backup:LibraryApp_Backups/logs/backup_log.txt /tmp/
+cat /tmp/backup_log.txt
+```
+
+You can also view the logs via the Google Drive web interface:
+1. Go to https://drive.google.com
+2. Navigate to `LibraryApp_Backups` -> `logs`
+3. Open `backup_log.txt` to view the backup history
 
 ---
 
@@ -339,27 +413,42 @@ crontab -e
 
 ### 2. Add Cron Schedule
 
-Add one of the following lines based on your backup frequency needs:
+**Generate Your Cron Line Automatically:**
 
-**Daily at 2:00 AM (Recommended)**
+Run this command from your library-app directory to generate the correct cron line:
+
 ```bash
-0 2 * * * /home/$USER/library_app/scripts/postgresql_backup.sh >> /home/$USER/library_app/backups/cron_log.txt 2>&1
+# Navigate to library-app directory
+cd library-app
+
+# Get absolute path
+APP_PATH=$(pwd)
+
+# Generate cron line for daily backups at 2:00 AM
+echo "0 2 * * * $APP_PATH/scripts/postgresql_backup.sh >> $APP_PATH/backups/cron_log.txt 2>&1"
 ```
 
-**Every 12 hours (2:00 AM and 2:00 PM)**
+Copy the output and paste it into your crontab.
+
+**Other Schedule Options:**
+
 ```bash
-0 2,14 * * * /home/$USER/library_app/scripts/postgresql_backup.sh >> /home/$USER/library_app/backups/cron_log.txt 2>&1
+# Every 12 hours (2:00 AM and 2:00 PM)
+echo "0 2,14 * * * $APP_PATH/scripts/postgresql_backup.sh >> $APP_PATH/backups/cron_log.txt 2>&1"
+
+# Every 6 hours
+echo "0 */6 * * * $APP_PATH/scripts/postgresql_backup.sh >> $APP_PATH/backups/cron_log.txt 2>&1"
+
+# Weekly on Sunday at 3:00 AM
+echo "0 3 * * 0 $APP_PATH/scripts/postgresql_backup.sh >> $APP_PATH/backups/cron_log.txt 2>&1"
 ```
 
-**Every 6 hours**
-```bash
-0 */6 * * * /home/$USER/library_app/scripts/postgresql_backup.sh >> /home/$USER/library_app/backups/cron_log.txt 2>&1
-```
-
-**Weekly on Sunday at 3:00 AM**
-```bash
-0 3 * * 0 /home/$USER/library_app/scripts/postgresql_backup.sh >> /home/$USER/library_app/backups/cron_log.txt 2>&1
-```
+**To add to crontab:**
+1. Generate your preferred schedule line using the commands above
+2. Copy the output
+3. Run `crontab -e`
+4. Paste the line
+5. Save and exit
 
 **Cron Schedule Format:**
 ```
@@ -396,14 +485,20 @@ sudo systemctl restart cron
 ### 5. Test Cron Execution (Optional)
 
 ```bash
-# Edit crontab to run in 2 minutes
+# From the library-app directory
+cd library-app
+
+# Generate a test cron line that runs every 2 minutes
+APP_PATH=$(pwd)
+echo "*/2 * * * * $APP_PATH/scripts/postgresql_backup.sh >> $APP_PATH/backups/cron_log.txt 2>&1"
+
+# Copy the output, then edit crontab
 crontab -e
 
-# Add temporary line (runs 2 minutes from now):
-*/2 * * * * /home/$USER/library_app/scripts/postgresql_backup.sh >> /home/$USER/library_app/backups/cron_log.txt 2>&1
+# Paste the line into crontab, save and exit
 
 # Wait 2-3 minutes and check log
-tail -f ~/library_app/backups/cron_log.txt
+tail -f backups/cron_log.txt
 
 # Remove test cron job after successful test
 crontab -e
@@ -416,11 +511,14 @@ crontab -e
 ### 1. Check Backup Status
 
 ```bash
+# From the library-app directory
+cd library-app
+
 # View recent cron job output
-tail -n 100 ~/library_app/backups/cron_log.txt
+tail -n 100 backups/cron_log.txt
 
 # View backup script log
-tail -n 100 ~/library_app/backups/backup_log.txt
+tail -n 100 backups/backup_log.txt
 
 # Count backups on Google Drive
 rclone lsf gdrive_backup:LibraryApp_Backups | wc -l
@@ -435,8 +533,11 @@ rclone lsl gdrive_backup:LibraryApp_Backups | tail -1
 ### 2. Create Monitoring Script
 
 ```bash
+# From the library-app directory
+cd library-app
+
 # Create monitoring script
-nano ~/library_app/scripts/check_backup_status.sh
+nano scripts/check_backup_status.sh
 ```
 
 Add the following content:
@@ -444,11 +545,15 @@ Add the following content:
 ```bash
 #!/bin/bash
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 echo "=== Backup Status Report ==="
 echo ""
 
 # Check last local backup
-LAST_LOCAL=$(ls -t ~/library_app/backups/library_app_backup_*.sql.gz 2>/dev/null | head -1)
+LAST_LOCAL=$(ls -t "$PROJECT_ROOT/backups/library_app_backup_*.sql.gz" 2>/dev/null | head -1)
 if [ -n "$LAST_LOCAL" ]; then
     echo "Last local backup:"
     ls -lh "$LAST_LOCAL"
@@ -466,7 +571,7 @@ echo ""
 
 # Check cron log for errors
 echo "Recent errors in cron log (if any):"
-grep -i "error\|failed" ~/library_app/backups/cron_log.txt | tail -5
+grep -i "error\|failed" "$PROJECT_ROOT/backups/cron_log.txt" | tail -5
 
 echo ""
 echo "=== End of Report ==="
@@ -475,7 +580,8 @@ echo "=== End of Report ==="
 Make it executable:
 
 ```bash
-chmod +x ~/library_app/scripts/check_backup_status.sh
+# From the library-app directory
+chmod +x scripts/check_backup_status.sh
 
 # Run it
 ./check_backup_status.sh
@@ -496,8 +602,11 @@ echo "Test email from VPS" | mail -s "Test Subject" your-email@example.com
 Modify backup script to send email on failure:
 
 ```bash
+# From the library-app directory
+cd library-app
+
 # Edit backup script
-nano ~/library_app/scripts/postgresql_backup.sh
+nano scripts/postgresql_backup.sh
 
 # Add at the end of the script (before exit 0):
 # Send email notification
@@ -522,7 +631,10 @@ The script automatically implements a rotation strategy:
 Edit the backup script to change retention:
 
 ```bash
-nano ~/library_app/scripts/postgresql_backup.sh
+# From the library-app directory
+cd library-app
+
+nano scripts/postgresql_backup.sh
 
 # Find and modify these lines:
 
@@ -580,12 +692,15 @@ docker ps | grep postgres_library_app
 # Check database connection
 docker exec -it postgres_library_app psql -U libraryuser -d library_app_db -c "SELECT 1;"
 
+# From the library-app directory
+cd library-app
+
 # Run script with verbose output
-bash -x ~/library_app/scripts/postgresql_backup.sh
+bash -x scripts/postgresql_backup.sh
 
 # Check script permissions
-ls -l ~/library_app/scripts/postgresql_backup.sh
-chmod +x ~/library_app/scripts/postgresql_backup.sh
+ls -l scripts/postgresql_backup.sh
+chmod +x scripts/postgresql_backup.sh
 ```
 
 ### Issue: Cron job not running
@@ -611,8 +726,8 @@ crontab -e
 ### Issue: Upload to Google Drive slow
 
 ```bash
-# Check bandwidth
-rclone copy --progress --bwlimit 1M /path/to/file gdrive_backup:/path/
+# Check bandwidth (limit to 1MB/s for testing)
+rclone copy --progress --bwlimit 1M backups/backup_file.sql.gz gdrive_backup:LibraryApp_Backups/
 
 # Check Google Drive quota
 rclone about gdrive_backup:
@@ -627,8 +742,13 @@ rclone test speed gdrive_backup:
 # Check PostgreSQL logs
 docker logs postgres_library_app
 
-# Verify database credentials in .env
-cat ~/library_app/.env | grep DB_
+# From the library-app directory
+cd library-app
+
+# Verify database credentials in env.sh or .env
+cat env.sh | grep DB_
+# or
+cat .env | grep DB_
 
 # Test manual pg_dump
 docker exec postgres_library_app pg_dump -U libraryuser -d library_app_db | head -20
@@ -662,6 +782,9 @@ docker exec postgres_library_app pg_dump -U libraryuser -d library_app_db | head
 ## Useful Commands Reference
 
 ```bash
+# From the library-app directory
+cd library-app
+
 # List all backups on Google Drive
 rclone lsl gdrive_backup:LibraryApp_Backups
 
@@ -675,13 +798,13 @@ rclone delete gdrive_backup:LibraryApp_Backups/backup_file.sql.gz
 rclone about gdrive_backup:
 
 # Sync local to Google Drive (careful - can delete files!)
-rclone sync ~/library_app/backups gdrive_backup:LibraryApp_Backups
+rclone sync backups gdrive_backup:LibraryApp_Backups
 
 # Run backup manually
-~/library_app/scripts/postgresql_backup.sh
+./scripts/postgresql_backup.sh
 
 # Check backup status
-~/library_app/scripts/check_backup_status.sh
+./scripts/check_backup_status.sh
 ```
 
 ---

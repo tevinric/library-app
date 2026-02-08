@@ -1,3 +1,7 @@
+# Project Root (auto-detected when using env.sh)
+# This will be set automatically when sourcing env.sh
+# PROJECT_ROOT will point to the library-app directory
+
 # Database Configuration
 ZOELIBRARYAPP_DB_HOST=postgres_library_app
 ZOELIBRARYAPP_DB_PORT=5432
