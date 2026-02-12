@@ -13,6 +13,21 @@ import CheckoutHistory from './pages/CheckoutHistory'
 import Users from './pages/Users'
 import Wishlist from './pages/Wishlist'
 import FollowUps from './pages/FollowUps'
+import {
+  DashboardIcon,
+  BookIcon,
+  SearchIcon,
+  CheckoutIcon,
+  ListIcon,
+  CheckInIcon,
+  HistoryIcon,
+  UsersIcon,
+  StarIcon,
+  BellIcon,
+  LogoutIcon,
+  LibraryIcon,
+  MicrosoftIcon
+} from './components/Icons'
 import './App.css'
 
 // Check if we're in development mode
@@ -103,18 +118,18 @@ function App() {
     }
   }
 
-  // Navigation items
+  // Navigation items with professional icons
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/books/register', label: 'Register Books', icon: '📚' },
-    { path: '/books/search', label: 'Book Search', icon: '🔍' },
-    { path: '/checkout', label: 'Checkout Books', icon: '📤' },
-    { path: '/checked-out', label: 'Checked Out', icon: '📋' },
-    { path: '/check-in', label: 'Check In', icon: '📥' },
-    { path: '/history', label: 'Checkout History', icon: '📜' },
-    { path: '/users', label: 'Users', icon: '👥' },
-    { path: '/wishlist', label: 'Wishlist', icon: '⭐' },
-    { path: '/follow-ups', label: 'Follow Ups', icon: '🔔' },
+    { path: '/', label: 'Dashboard', IconComponent: DashboardIcon },
+    { path: '/books/register', label: 'Register Books', IconComponent: BookIcon },
+    { path: '/books/search', label: 'Book Search', IconComponent: SearchIcon },
+    { path: '/checkout', label: 'Checkout Books', IconComponent: CheckoutIcon },
+    { path: '/checked-out', label: 'Checked Out', IconComponent: ListIcon },
+    { path: '/check-in', label: 'Check In', IconComponent: CheckInIcon },
+    { path: '/history', label: 'Checkout History', IconComponent: HistoryIcon },
+    { path: '/users', label: 'Users', IconComponent: UsersIcon },
+    { path: '/wishlist', label: 'Wishlist', IconComponent: StarIcon },
+    { path: '/follow-ups', label: 'Follow Ups', IconComponent: BellIcon },
   ]
 
   // Loading state
@@ -129,15 +144,46 @@ function App() {
   // Not authenticated - show login (PROD mode only)
   if (!IS_DEV_MODE && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
-          <h1 className="text-2xl font-bold text-white mb-6">Library Management</h1>
-          <button
-            onClick={handleLogin}
-            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Sign in with Microsoft
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 flex items-center justify-center p-4">
+        <div className="login-container max-w-md w-full text-center space-y-8">
+          {/* Logo and Branding */}
+          <div className="relative z-10 space-y-4">
+            <div className="flex justify-center">
+              <div className="icon-circle from-primary-500 to-primary-600 w-20 h-20">
+                <LibraryIcon className="w-10 h-10 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold gradient-text mb-2">
+                ZOE Library
+              </h1>
+              <p className="text-gray-400 text-lg font-medium">
+                Management System
+              </p>
+            </div>
+          </div>
+
+          {/* Login Form */}
+          <div className="relative z-10 space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-white">Welcome Back</h2>
+              <p className="text-gray-400">
+                Sign in with your Microsoft account to continue
+              </p>
+            </div>
+
+            <button
+              onClick={handleLogin}
+              className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-300 font-semibold shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:-translate-y-1 group"
+            >
+              <MicrosoftIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span>Sign in with Microsoft</span>
+            </button>
+
+            <p className="text-xs text-gray-500">
+              Secure authentication powered by Microsoft Azure AD
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -165,22 +211,32 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 flex">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-800 to-gray-900 border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-4 border-b border-gray-700">
-            <h1 className="text-xl font-bold text-primary-400">Library Management</h1>
-            <p className="text-sm text-gray-400">{currentUser?.email || accounts[0]?.username}</p>
-            {IS_DEV_MODE && (
-              <span className="inline-block mt-1 px-2 py-1 bg-warning-900/50 text-warning-300 text-xs rounded">
-                DEV MODE
-              </span>
-            )}
+          <div className="p-6 border-b border-gray-700/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="icon-circle from-primary-500 to-primary-600 w-10 h-10">
+                <LibraryIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
+                <p className="text-xs text-gray-500">Management</p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-700/50">
+              <p className="text-xs text-gray-400 truncate">{currentUser?.email || accounts[0]?.username}</p>
+              {IS_DEV_MODE && (
+                <span className="inline-block mt-2 px-2 py-1 bg-warning-900/50 text-warning-300 text-xs rounded-md font-medium">
+                  DEV MODE
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {navItems.map((item) => (
                 <li key={item.path}>
                   <Link
@@ -188,8 +244,8 @@ function App() {
                     className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <span className="mr-2">{item.icon}</span>
-                    {item.label}
+                    <item.IconComponent className="w-5 h-5" />
+                    <span>{item.label}</span>
                   </Link>
                 </li>
               ))}
@@ -197,12 +253,13 @@ function App() {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4 border-t border-gray-700/50">
             <button
               onClick={handleLogout}
-              className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700/50 hover:text-white rounded-lg transition-all duration-200 font-medium"
             >
-              🚪 Sign Out
+              <LogoutIcon className="w-5 h-5" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -211,19 +268,24 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-gray-800 border-b border-gray-700 p-4">
+        <header className="lg:hidden bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50 p-4 shadow-lg">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-primary-400">Library Management</h1>
-              {IS_DEV_MODE && (
-                <span className="inline-block mt-1 px-2 py-1 bg-warning-900/50 text-warning-300 text-xs rounded">
-                  DEV MODE
-                </span>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="icon-circle from-primary-500 to-primary-600 w-10 h-10">
+                <LibraryIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
+                {IS_DEV_MODE && (
+                  <span className="inline-block px-2 py-0.5 bg-warning-900/50 text-warning-300 text-xs rounded-md font-medium">
+                    DEV MODE
+                  </span>
+                )}
+              </div>
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-300 hover:text-white"
+              className="text-gray-300 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {sidebarOpen ? (

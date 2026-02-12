@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getBooks, createBook, createBookCopy, getBookCopies, getBookByBarcode } from '../api'
 import BarcodeScanner from '../components/BarcodeScanner'
+import { BookIcon, PlusIcon, XIcon } from '../components/Icons'
 
 function BookRegistration() {
   const [search, setSearch] = useState('')
@@ -248,9 +249,19 @@ function BookRegistration() {
       <div className="card">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn-primary w-full"
+          className="btn-primary w-full flex items-center justify-center gap-2"
         >
-          {showForm ? '❌ Cancel' : '➕ Register New Book'}
+          {showForm ? (
+            <>
+              <XIcon className="w-5 h-5" />
+              <span>Cancel</span>
+            </>
+          ) : (
+            <>
+              <PlusIcon className="w-5 h-5" />
+              <span>Register New Book</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -401,9 +412,10 @@ function BookRegistration() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary"
+                className="btn-primary flex items-center gap-2"
               >
-                {loading ? 'Registering...' : '📚 Register Book'}
+                <BookIcon className="w-5 h-5" />
+                <span>{loading ? 'Registering...' : 'Register Book'}</span>
               </button>
               <button
                 type="button"

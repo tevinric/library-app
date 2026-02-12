@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getCheckouts, returnCheckout, getBookByBarcode } from '../api'
 import { formatDistanceToNow } from 'date-fns'
 import BarcodeScanner from '../components/BarcodeScanner'
+import { CheckInIcon } from '../components/Icons'
 
 function CheckIn() {
   const [checkouts, setCheckouts] = useState([])
@@ -182,7 +183,8 @@ function CheckIn() {
                       disabled={loading}
                       className="btn-success"
                     >
-                      📥 Check In
+                      <CheckInIcon className="w-4 h-4 inline mr-2" />
+                      Check In
                     </button>
                   </div>
                 </div>
@@ -264,7 +266,8 @@ function CheckIn() {
                       disabled={loading}
                       className="btn-success"
                     >
-                      📥 Check In
+                      <CheckInIcon className="w-4 h-4 inline mr-2" />
+                      Check In
                     </button>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getWishlist, createWishlistItem, updateWishlistItem, deleteWishlistItem } from '../api'
+import { StarIcon, EditIcon, TrashIcon } from '../components/Icons'
 
 function Wishlist() {
   const [wishlist, setWishlist] = useState([])
@@ -140,8 +141,9 @@ function Wishlist() {
           <h1 className="text-3xl font-bold text-white">Book Wishlist</h1>
           <p className="text-gray-400 mt-1">Requested books not in library</p>
         </div>
-        <button onClick={handleNewItem} className="btn-primary">
-          ⭐ Add to Wishlist
+        <button onClick={handleNewItem} className="btn-primary flex items-center gap-2">
+          <StarIcon className="w-5 h-5" />
+          <span>Add to Wishlist</span>
         </button>
       </div>
 
@@ -183,15 +185,17 @@ function Wishlist() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="btn-secondary text-sm"
+                        className="btn-secondary text-sm flex items-center gap-2"
                       >
-                        ✏️ Edit
+                        <EditIcon className="w-4 h-4" />
+                        <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="btn-danger text-sm"
+                        className="btn-danger text-sm flex items-center gap-2"
                       >
-                        🗑️ Delete
+                        <TrashIcon className="w-4 h-4" />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>

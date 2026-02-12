@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getBooks, getBookCopies, updateBook, createBookCopy, createWishlistItem, createFollowUp, getBookByBarcode } from '../api'
 import { formatDistanceToNow } from 'date-fns'
 import BarcodeScanner from '../components/BarcodeScanner'
+import { SearchIcon, StarIcon, EditIcon, BellIcon, BookIcon } from '../components/Icons'
 
 function BookSearch() {
   const [search, setSearch] = useState('')
@@ -233,8 +234,9 @@ function BookSearch() {
             className="flex-1 px-4 py-2"
             onKeyPress={(e) => e.key === 'Enter' && loadBooks()}
           />
-          <button onClick={loadBooks} className="btn-primary">
-            🔍 Search
+          <button onClick={loadBooks} className="btn-primary flex items-center gap-2">
+            <SearchIcon className="w-5 h-5" />
+            <span>Search</span>
           </button>
           {!showBarcodeScanner && (
             <button
@@ -250,9 +252,10 @@ function BookSearch() {
           )}
           <button
             onClick={() => setShowWishlistModal(true)}
-            className="btn-secondary"
+            className="btn-secondary flex items-center gap-2"
           >
-            ⭐ Add to Wishlist
+            <StarIcon className="w-5 h-5" />
+            <span>Add to Wishlist</span>
           </button>
         </div>
       </div>
@@ -271,9 +274,9 @@ function BookSearch() {
                     <h3 className="text-lg font-semibold text-white">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
                     <div className="mt-2 space-y-1">
-                      {book.isbn && <p className="text-sm text-gray-500">📚 ISBN: {book.isbn}</p>}
-                      {book.barcode && <p className="text-sm text-gray-500">🔖 Barcode: {book.barcode}</p>}
-                      {book.publisher && <p className="text-sm text-gray-500">🏢 Publisher: {book.publisher}</p>}
+                      {book.isbn && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">ISBN:</span> {book.isbn}</p>}
+                      {book.barcode && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Barcode:</span> {book.barcode}</p>}
+                      {book.publisher && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Publisher:</span> {book.publisher}</p>}
                       {book.publication_year && <p className="text-sm text-gray-500">📅 Year: {book.publication_year}</p>}
                       {book.language && book.language !== 'English' && <p className="text-sm text-gray-500">🌐 Language: {book.language}</p>}
                       {book.pages && <p className="text-sm text-gray-500">📄 Pages: {book.pages}</p>}
@@ -299,9 +302,10 @@ function BookSearch() {
                   </button>
                   <button
                     onClick={() => handleEditBook(book)}
-                    className="btn-primary text-sm"
+                    className="btn-primary text-sm flex items-center gap-2"
                   >
-                    ✏️ Edit Book
+                    <EditIcon className="w-4 h-4" />
+                    <span>Edit Book</span>
                   </button>
                   <button
                     onClick={() => handleAddCopy(book)}
@@ -642,9 +646,10 @@ function BookSearch() {
             <div className="flex gap-4 mt-6">
               <button
                 onClick={() => handleAddToFollowUp(selectedCheckout)}
-                className="btn-primary"
+                className="btn-primary flex items-center gap-2"
               >
-                🔔 Add to Follow-up List
+                <BellIcon className="w-5 h-5" />
+                <span>Add to Follow-up List</span>
               </button>
               <button
                 onClick={() => setShowCheckoutModal(false)}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getBorrowers, createBorrower, updateBorrower, deleteBorrower } from '../api'
+import { EditIcon, TrashIcon } from '../components/Icons'
 
 function Users() {
   const [borrowers, setBorrowers] = useState([])
@@ -175,18 +176,20 @@ function Users() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(borrower)}
-                        className="btn-secondary text-sm"
+                        className="btn-secondary text-sm flex items-center gap-2"
                       >
-                        ✏️ Edit
+                        <EditIcon className="w-4 h-4" />
+                        <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(borrower.id)}
                         disabled={borrower.active_checkouts > 0}
-                        className={`btn-danger text-sm ${
+                        className={`btn-danger text-sm flex items-center gap-2 ${
                           borrower.active_checkouts > 0 ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
-                        🗑️ Delete
+                        <TrashIcon className="w-4 h-4" />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>

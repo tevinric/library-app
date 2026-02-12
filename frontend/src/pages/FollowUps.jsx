@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getFollowUps, updateFollowUp, deleteFollowUp } from '../api'
 import { formatDistanceToNow, format } from 'date-fns'
+import { TrashIcon } from '../components/Icons'
 
 function FollowUps() {
   const [followUps, setFollowUps] = useState([])
@@ -175,9 +176,10 @@ function FollowUps() {
                   </button>
                   <button
                     onClick={() => handleDelete(followUp.id)}
-                    className="btn-danger text-sm"
+                    className="btn-danger text-sm flex items-center gap-2"
                   >
-                    🗑️ Delete
+                    <TrashIcon className="w-4 h-4" />
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>
