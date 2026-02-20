@@ -169,7 +169,7 @@ function Dashboard() {
           </Link>
           <Link to="/check-in" className="btn-primary text-center flex items-center justify-center gap-2">
             <CollectionIcon className="w-5 h-5" />
-            <span>Check In Book</span>
+            <span>Return Book</span>
           </Link>
           <Link to="/books/search" className="btn-secondary text-center flex items-center justify-center gap-2">
             <BookIcon className="w-5 h-5" />

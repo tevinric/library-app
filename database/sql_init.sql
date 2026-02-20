@@ -34,15 +34,12 @@ CREATE TRIGGER update_users_updated_at
 -- =============================================================================
 -- BORROWERS TABLE
 -- =============================================================================
+-- Modified: 2026-02-19 - Removed PII fields, added borrower_id for privacy
 CREATE TABLE IF NOT EXISTS borrowers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) NOT NULL,
-    alt_phone VARCHAR(50),
-    address TEXT,
+    borrower_id VARCHAR(8) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -54,8 +51,10 @@ CREATE TRIGGER update_borrowers_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE INDEX IF NOT EXISTS idx_borrowers_user_id ON borrowers(user_id);
-CREATE INDEX IF NOT EXISTS idx_borrowers_name ON borrowers(first_name, last_name);
-CREATE INDEX IF NOT EXISTS idx_borrowers_email ON borrowers(email);
+CREATE INDEX IF NOT EXISTS idx_borrowers_borrower_id ON borrowers(borrower_id);
+CREATE INDEX IF NOT EXISTS idx_borrowers_search ON borrowers(first_name, borrower_id);
+
+COMMENT ON COLUMN borrowers.borrower_id IS 'Unique 8-character identifier: 3 letters from first_name + 5 random alphanumeric characters (e.g., JOH3X7K9). Used to minimize PII exposure.';
 
 -- =============================================================================
 -- BOOKS TABLE (Master book records)
@@ -73,6 +72,17 @@ CREATE TABLE IF NOT EXISTS books (
     description TEXT,
     language VARCHAR(50) DEFAULT 'English',
     pages INT,
+    -- OpenLibrary API fields
+    cover_small TEXT,
+    cover_medium TEXT,
+    cover_large TEXT,
+    subjects TEXT,
+    openlibrary_key VARCHAR(100),
+    openlibrary_url TEXT,
+    excerpt TEXT,
+    dewey_decimal VARCHAR(50),
+    lc_classification VARCHAR(100),
+    -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

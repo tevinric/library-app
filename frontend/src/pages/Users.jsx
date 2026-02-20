@@ -9,12 +9,7 @@ function Users() {
   const [showModal, setShowModal] = useState(false)
   const [editingBorrower, setEditingBorrower] = useState(null)
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    alt_phone: '',
-    address: ''
+    first_name: ''
   })
 
   useEffect(() => {
@@ -47,12 +42,7 @@ function Users() {
       setShowModal(false)
       setEditingBorrower(null)
       setFormData({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        alt_phone: '',
-        address: ''
+        first_name: ''
       })
       loadBorrowers()
     } catch (error) {
@@ -65,12 +55,7 @@ function Users() {
   const handleEdit = (borrower) => {
     setEditingBorrower(borrower)
     setFormData({
-      first_name: borrower.first_name,
-      last_name: borrower.last_name,
-      email: borrower.email,
-      phone: borrower.phone,
-      alt_phone: borrower.alt_phone || '',
-      address: borrower.address || ''
+      first_name: borrower.first_name
     })
     setShowModal(true)
   }
@@ -93,12 +78,7 @@ function Users() {
   const handleNewBorrower = () => {
     setEditingBorrower(null)
     setFormData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      alt_phone: '',
-      address: ''
+      first_name: ''
     })
     setShowModal(true)
   }
@@ -130,7 +110,7 @@ function Users() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or email..."
+          placeholder="Search by name or borrower ID..."
           className="w-full px-4 py-2"
         />
       </div>
@@ -151,16 +131,9 @@ function Users() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white">
-                      {borrower.first_name} {borrower.last_name}
+                      {borrower.first_name}
                     </h3>
-                    <p className="text-gray-400">{borrower.email}</p>
-                    <p className="text-gray-400">{borrower.phone}</p>
-                    {borrower.alt_phone && (
-                      <p className="text-gray-500 text-sm">Alt: {borrower.alt_phone}</p>
-                    )}
-                    {borrower.address && (
-                      <p className="text-gray-500 text-sm mt-1">{borrower.address}</p>
-                    )}
+                    <p className="text-gray-400">ID: {borrower.borrower_id}</p>
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
@@ -208,65 +181,21 @@ function Users() {
               {editingBorrower ? 'Edit Borrower' : 'New Borrower'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
-                  <input
-                    type="text"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                    required
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
-                  <input
-                    type="text"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                    required
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    required
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Phone *</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    required
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Alt Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.alt_phone}
-                    onChange={(e) => setFormData({...formData, alt_phone: e.target.value})}
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Address</label>
-                <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  rows="2"
+                <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+                <input
+                  type="text"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                  required
                   className="w-full px-4 py-2"
                 />
+              </div>
+              <div className="bg-gray-700 p-3 rounded-lg">
+                <p className="text-sm text-gray-400">
+                  A unique borrower ID will be automatically generated {editingBorrower ? '' : 'when you create this borrower'}.
+                  {editingBorrower && ' The borrower ID remains unchanged when updating the name.'}
+                </p>
               </div>
               <div className="flex gap-4">
                 <button type="submit" disabled={loading} className="btn-primary">

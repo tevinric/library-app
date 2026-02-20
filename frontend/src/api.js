@@ -83,4 +83,88 @@ export const deleteFollowUp = (id) => api.delete(`/api/follow-ups/${id}`)
 // Dashboard Stats
 export const getDashboardStats = () => api.get('/api/dashboard/stats')
 
+// =============================================================================
+// OPENLIBRARY API INTEGRATION
+// =============================================================================
+
+/**
+ * Fetch book details from OpenLibrary API
+ * @param {string} isbn - ISBN-10 or ISBN-13
+ * @returns {Promise} OpenLibrary book data
+ */
+export const fetchBookFromOpenLibrary = async (isbn) => {
+  try {
+    // Clean ISBN - remove hyphens and spaces
+    const cleanIsbn = isbn.replace(/[-\s]/g, '')
+
+    console.log('Fetching from OpenLibrary for ISBN:', cleanIsbn)
+
+    // Call OpenLibrary API
+    const response = await axios.get(
+      `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`,
+      { timeout: 10000 } // 10 second timeout
+    )
+
+    console.log('OpenLibrary API Response:', response.data)
+
+    const bookKey = `ISBN:${cleanIsbn}`
+    const bookData = response.data[bookKey]
+
+    if (!bookData) {
+      throw new Error('Book not found in OpenLibrary')
+    }
+
+    console.log('Book data found:', bookData)
+    console.log('Cover data:', bookData.cover)
+    console.log('Publish date:', bookData.publish_date)
+
+    // Extract year from publish_date (might be "2006" or "April 2006" etc)
+    let publicationYear = ''
+    if (bookData.publish_date) {
+      // Try to extract 4-digit year
+      const yearMatch = String(bookData.publish_date).match(/\d{4}/)
+      if (yearMatch) {
+        publicationYear = yearMatch[0] // Keep as string for input field
+      }
+    }
+
+    // Transform OpenLibrary data to our format
+    const transformedData = {
+      title: bookData.title || '',
+      author: bookData.authors ? bookData.authors.map(a => a.name).join(', ') : '',
+      publisher: bookData.publishers ? bookData.publishers[0]?.name : '',
+      publication_year: publicationYear,
+      pages: bookData.number_of_pages || null,
+      description: bookData.notes || '',
+      isbn: cleanIsbn,
+
+      // OpenLibrary specific fields
+      cover_small: bookData.cover?.small || null,
+      cover_medium: bookData.cover?.medium || null,
+      cover_large: bookData.cover?.large || null,
+      subjects: bookData.subjects ? JSON.stringify(bookData.subjects.map(s => s.name)) : null,
+      openlibrary_key: bookData.key || null,
+      openlibrary_url: bookData.url || null,
+      excerpt: bookData.excerpts?.[0]?.text || null,
+      dewey_decimal: bookData.classifications?.dewey_decimal_class?.[0] || null,
+      lc_classification: bookData.classifications?.lc_classifications?.[0] || null,
+
+      // Additional metadata
+      rawData: bookData // Keep raw data for reference
+    }
+
+    console.log('Transformed data:', transformedData)
+    console.log('Cover URLs:', {
+      small: transformedData.cover_small,
+      medium: transformedData.cover_medium,
+      large: transformedData.cover_large
+    })
+
+    return transformedData
+  } catch (error) {
+    console.error('Error fetching from OpenLibrary:', error)
+    throw error
+  }
+}
+
 export default api

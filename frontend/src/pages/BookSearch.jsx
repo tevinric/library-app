@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { getBooks, getBookCopies, updateBook, createBookCopy, createWishlistItem, createFollowUp, getBookByBarcode } from '../api'
+import { getBooks, getBookCopies, updateBook, updateBookCopy, createBookCopy, createWishlistItem, createFollowUp, getBookByBarcode, deleteBook } from '../api'
 import { formatDistanceToNow } from 'date-fns'
 import BarcodeScanner from '../components/BarcodeScanner'
-import { SearchIcon, StarIcon, EditIcon, BellIcon, BookIcon } from '../components/Icons'
+import { SearchIcon, StarIcon, EditIcon, BellIcon, BookIcon, TrashIcon, CheckIcon, XIcon } from '../components/Icons'
 
 function BookSearch() {
   const [search, setSearch] = useState('')
@@ -40,6 +40,13 @@ function BookSearch() {
     condition: 'Good',
     location: '',
     notes: ''
+  })
+  const [editingCopyId, setEditingCopyId] = useState(null)
+  const [editCopyData, setEditCopyData] = useState({
+    condition: '',
+    location: '',
+    notes: '',
+    status: ''
   })
 
   const loadBooks = async () => {
@@ -98,6 +105,35 @@ function BookSearch() {
     }
   }
 
+  const handleDeleteBook = async (book) => {
+    if (!confirm(`⚠️ Are you sure you want to delete "${book.title}"?\n\nThis will permanently remove the book and all its copies from the system.\n\nThis action cannot be undone!`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      await deleteBook(book.id)
+      alert('✓ Book deleted successfully!')
+
+      // Refresh the book list
+      loadBooks()
+
+      // Clear selection if this was the selected book
+      if (selectedBookId === book.id) {
+        setSelectedBookId(null)
+        setCopies([])
+      }
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('checked out')) {
+        alert('❌ Cannot delete this book:\n\nThere are active checkouts for this book.\n\nPlease check in all copies before deleting.')
+      } else {
+        alert('Error deleting book: ' + error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleAddCopy = (book) => {
     setSelectedBook(book)
     setNewCopyData({
@@ -128,6 +164,44 @@ function BookSearch() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditCopy = (copy) => {
+    setEditingCopyId(copy.id)
+    setEditCopyData({
+      condition: copy.condition || 'Good',
+      location: copy.location || '',
+      notes: copy.notes || '',
+      status: copy.status || 'Available'
+    })
+  }
+
+  const handleUpdateCopy = async (copyId) => {
+    try {
+      setLoading(true)
+      await updateBookCopy(copyId, {
+        condition: editCopyData.condition,
+        location: editCopyData.location || null,
+        notes: editCopyData.notes || null,
+        status: editCopyData.status
+      })
+      alert('✓ Copy updated successfully!')
+      setEditingCopyId(null)
+      setEditCopyData({ condition: '', location: '', notes: '', status: '' })
+      // Reload copies to show updated data
+      if (selectedBookId) {
+        loadCopies(selectedBookId)
+      }
+    } catch (error) {
+      alert('Error updating copy: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const cancelEditCopy = () => {
+    setEditingCopyId(null)
+    setEditCopyData({ condition: '', location: '', notes: '', status: '' })
   }
 
   const handleAddToWishlist = async (e) => {
@@ -269,21 +343,36 @@ function BookSearch() {
           <div className="space-y-4">
             {books.map((book) => (
               <div key={book.id} className="bg-gray-700 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
+                <div className="flex gap-4 items-start mb-3">
+                  {/* Book Cover Thumbnail */}
+                  {book.cover_small || book.cover_medium ? (
+                    <img
+                      src={book.cover_small || book.cover_medium}
+                      alt={book.title}
+                      className="w-20 h-auto rounded-lg shadow-lg border border-gray-600 flex-shrink-0"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  ) : (
+                    <div className="w-20 h-28 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-500">
+                      <BookIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-white">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
                     <div className="mt-2 space-y-1">
                       {book.isbn && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">ISBN:</span> {book.isbn}</p>}
                       {book.barcode && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Barcode:</span> {book.barcode}</p>}
                       {book.publisher && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Publisher:</span> {book.publisher}</p>}
-                      {book.publication_year && <p className="text-sm text-gray-500">📅 Year: {book.publication_year}</p>}
-                      {book.language && book.language !== 'English' && <p className="text-sm text-gray-500">🌐 Language: {book.language}</p>}
-                      {book.pages && <p className="text-sm text-gray-500">📄 Pages: {book.pages}</p>}
+                      {book.publication_year && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Year:</span> {book.publication_year}</p>}
+                      {book.language && book.language !== 'English' && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Language:</span> {book.language}</p>}
+                      {book.pages && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Pages:</span> {book.pages}</p>}
                     </div>
                     {book.genre && <span className="inline-block px-2 py-1 bg-primary-900/50 text-primary-300 text-xs rounded mt-2">{book.genre}</span>}
                   </div>
-                  <div className="text-right">
+
+                  <div className="text-right flex-shrink-0">
                     <p className="text-2xl font-bold text-success-400">{book.available_copies}</p>
                     <p className="text-sm text-gray-400">of {book.total_copies} available</p>
                   </div>
@@ -312,6 +401,13 @@ function BookSearch() {
                     className="btn-success text-sm"
                   >
                     ➕ Add Copy
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBook(book)}
+                    className="btn-danger text-sm flex items-center gap-2"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    <span>Delete</span>
                   </button>
                 </div>
 
@@ -348,15 +444,97 @@ function BookSearch() {
                                   <p className="text-gray-400">
                                     <span className="text-gray-500">Condition:</span> {copy.condition}
                                   </p>
-                                  {copy.location && (
-                                    <p className="text-gray-400">
-                                      <span className="text-gray-500">📍 Location:</span> <span className="text-primary-400 font-medium">{copy.location}</span>
-                                    </p>
-                                  )}
-                                  {copy.notes && (
-                                    <p className="text-gray-400">
-                                      <span className="text-gray-500">Notes:</span> {copy.notes}
-                                    </p>
+
+                                  {editingCopyId === copy.id ? (
+                                    // Edit mode - show all editable fields
+                                    <div className="space-y-3 mt-2">
+                                      {/* Condition dropdown */}
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">Condition</label>
+                                        <select
+                                          value={editCopyData.condition}
+                                          onChange={(e) => setEditCopyData({...editCopyData, condition: e.target.value})}
+                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                        >
+                                          <option value="Excellent">Excellent</option>
+                                          <option value="Good">Good</option>
+                                          <option value="Fair">Fair</option>
+                                          <option value="Poor">Poor</option>
+                                        </select>
+                                      </div>
+
+                                      {/* Location input */}
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">Location</label>
+                                        <input
+                                          type="text"
+                                          value={editCopyData.location}
+                                          onChange={(e) => setEditCopyData({...editCopyData, location: e.target.value})}
+                                          placeholder="e.g., Shelf A3, Room 101"
+                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                        />
+                                      </div>
+
+                                      {/* Notes textarea */}
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">Notes</label>
+                                        <textarea
+                                          value={editCopyData.notes}
+                                          onChange={(e) => setEditCopyData({...editCopyData, notes: e.target.value})}
+                                          placeholder="Any additional notes about this copy"
+                                          rows="2"
+                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                        />
+                                      </div>
+
+                                      {/* Action buttons */}
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => handleUpdateCopy(copy.id)}
+                                          disabled={loading}
+                                          className="btn-success text-sm px-3 py-2 flex items-center gap-1"
+                                        >
+                                          <CheckIcon className="w-4 h-4" />
+                                          <span>Save Changes</span>
+                                        </button>
+                                        <button
+                                          onClick={cancelEditCopy}
+                                          className="btn-secondary text-sm px-3 py-2 flex items-center gap-1"
+                                        >
+                                          <XIcon className="w-4 h-4" />
+                                          <span>Cancel</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    // View mode - show all copy details
+                                    <div className="space-y-1">
+                                      <p className="text-gray-400 text-sm">
+                                        <span className="text-gray-500">Condition:</span> {copy.condition}
+                                      </p>
+                                      <p className="text-gray-400 text-sm">
+                                        <span className="text-gray-500">📍 Location:</span>{' '}
+                                        {copy.location ? (
+                                          <span className="text-primary-400 font-medium">{copy.location}</span>
+                                        ) : (
+                                          <span className="text-gray-500 italic">No location set</span>
+                                        )}
+                                      </p>
+                                      {copy.notes && (
+                                        <p className="text-gray-400 text-sm">
+                                          <span className="text-gray-500">Notes:</span> {copy.notes}
+                                        </p>
+                                      )}
+                                      <div className="pt-2">
+                                        <button
+                                          onClick={() => handleEditCopy(copy)}
+                                          className="btn-secondary text-xs px-2 py-1 flex items-center gap-1"
+                                        >
+                                          <EditIcon className="w-3 h-3" />
+                                          <span>Edit</span>
+                                        </button>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -391,7 +569,20 @@ function BookSearch() {
       {showEditBookModal && (
         <div className="modal-overlay" onClick={() => setShowEditBookModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">Edit Book Details</h2>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Edit Book Details</h2>
+                <p className="text-sm text-gray-400 mt-1">Verify book cover matches physical book</p>
+              </div>
+              {editBookData.cover_large && (
+                <img
+                  src={editBookData.cover_large}
+                  alt={editBookData.title}
+                  className="w-32 h-auto rounded-lg shadow-2xl border-2 border-primary-500"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+              )}
+            </div>
             <form onSubmit={handleUpdateBook} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -631,7 +822,7 @@ function BookSearch() {
                 <p className="text-white">{selectedCheckout.borrower_email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Checked Out</p>
+                <p className="text-sm text-gray-400">Borrowed</p>
                 <p className="text-white">
                   {formatDistanceToNow(new Date(selectedCheckout.checkout_date), { addSuffix: true })}
                 </p>

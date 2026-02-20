@@ -7,6 +7,9 @@ import os
 from dotenv import load_dotenv
 import logging
 from datetime import datetime, timedelta
+import random
+import string
+import re
 
 # Load environment variables
 load_dotenv()
@@ -69,6 +72,46 @@ def sanitize_input(value, field_type='str'):
             return None
 
     return value
+
+def generate_borrower_id(first_name, conn):
+    """
+    Generate unique borrower_id in format: XXX#####
+    - XXX: First 3 uppercase letters from first_name (pad with X if needed)
+    - #####: 5 random uppercase alphanumeric characters
+
+    Args:
+        first_name (str): Borrower's first name
+        conn: Database connection to check uniqueness
+
+    Returns:
+        str: Unique 8-character borrower_id
+
+    Raises:
+        Exception: If unable to generate unique ID after 100 attempts
+    """
+    # Extract letters only from first name
+    letters_only = re.sub(r'[^A-Za-z]', '', first_name)
+
+    # Get first 3 characters (uppercase), pad with X if needed
+    prefix = letters_only[:3].upper() if letters_only else ''
+    prefix = prefix.ljust(3, 'X')
+
+    # Generate random 5-character alphanumeric suffix
+    max_attempts = 100
+    for attempt in range(max_attempts):
+        random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        borrower_id = prefix + random_part
+
+        # Check uniqueness
+        cur = conn.cursor()
+        cur.execute('SELECT id FROM borrowers WHERE borrower_id = %s', (borrower_id,))
+        exists = cur.fetchone()
+        cur.close()
+
+        if not exists:
+            return borrower_id
+
+    raise Exception(f'Unable to generate unique borrower_id after {max_attempts} attempts for name: {first_name}')
 
 # =============================================================================
 # AUTHENTICATION DECORATORS
@@ -238,8 +281,10 @@ def create_book():
 
         cur.execute('''
             INSERT INTO books (user_id, title, author, isbn, barcode, publisher, publication_year,
-                             genre, description, language, pages)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                             genre, description, language, pages, cover_small, cover_medium,
+                             cover_large, subjects, openlibrary_key, openlibrary_url, excerpt,
+                             dewey_decimal, lc_classification)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         ''', (
             str(g.user_id),
@@ -252,7 +297,16 @@ def create_book():
             sanitize_input(data.get('genre')),
             sanitize_input(data.get('description')),
             data.get('language', 'English'),
-            sanitize_input(data.get('pages'), 'int')
+            sanitize_input(data.get('pages'), 'int'),
+            sanitize_input(data.get('cover_small')),
+            sanitize_input(data.get('cover_medium')),
+            sanitize_input(data.get('cover_large')),
+            sanitize_input(data.get('subjects')),
+            sanitize_input(data.get('openlibrary_key')),
+            sanitize_input(data.get('openlibrary_url')),
+            sanitize_input(data.get('excerpt')),
+            sanitize_input(data.get('dewey_decimal')),
+            sanitize_input(data.get('lc_classification'))
         ))
 
         book = cur.fetchone()
@@ -279,7 +333,10 @@ def update_book(book_id):
             UPDATE books
             SET title = %s, author = %s, isbn = %s, barcode = %s, publisher = %s,
                 publication_year = %s, genre = %s, description = %s,
-                language = %s, pages = %s
+                language = %s, pages = %s, cover_small = %s, cover_medium = %s,
+                cover_large = %s, subjects = %s, openlibrary_key = %s,
+                openlibrary_url = %s, excerpt = %s, dewey_decimal = %s,
+                lc_classification = %s
             WHERE id = %s AND user_id = %s
             RETURNING *
         ''', (
@@ -293,6 +350,15 @@ def update_book(book_id):
             sanitize_input(data.get('description')),
             data.get('language'),
             sanitize_input(data.get('pages'), 'int'),
+            sanitize_input(data.get('cover_small')),
+            sanitize_input(data.get('cover_medium')),
+            sanitize_input(data.get('cover_large')),
+            sanitize_input(data.get('subjects')),
+            sanitize_input(data.get('openlibrary_key')),
+            sanitize_input(data.get('openlibrary_url')),
+            sanitize_input(data.get('excerpt')),
+            sanitize_input(data.get('dewey_decimal')),
+            sanitize_input(data.get('lc_classification')),
             book_id,
             str(g.user_id)
         ))
@@ -342,11 +408,12 @@ def delete_book(book_id):
 @app.route('/api/books/by-barcode/<barcode>', methods=['GET'])
 @token_required
 def get_book_by_barcode(barcode):
-    """Get book by barcode with copy availability information."""
+    """Get book by barcode or ISBN with copy availability information."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
+        # Search by barcode OR ISBN (since ISBNs can be scanned as barcodes)
         cur.execute('''
             SELECT b.*,
                    COUNT(DISTINCT bc.id) as total_copies,
@@ -363,9 +430,9 @@ def get_book_by_barcode(barcode):
                    ) FILTER (WHERE bc.id IS NOT NULL) as copies
             FROM books b
             LEFT JOIN book_copies bc ON b.id = bc.book_id
-            WHERE b.barcode = %s AND b.user_id = %s
+            WHERE (b.barcode = %s OR b.isbn = %s) AND b.user_id = %s
             GROUP BY b.id
-        ''', (barcode, str(g.user_id)))
+        ''', (barcode, barcode, str(g.user_id)))
 
         book = cur.fetchone()
         cur.close()
@@ -398,8 +465,8 @@ def get_book_copies(book_id):
                        WHEN co.id IS NOT NULL AND co.status = 'Checked Out'
                        THEN json_build_object(
                            'id', co.id,
-                           'borrower_name', br.first_name || ' ' || br.last_name,
-                           'borrower_email', br.email,
+                           'borrower_name', br.first_name,
+                           'borrower_id', br.borrower_id,
                            'checkout_date', co.checkout_date,
                            'due_date', co.due_date
                        )
@@ -563,11 +630,10 @@ def get_borrowers():
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
                 WHERE b.user_id = %s
                   AND (LOWER(b.first_name) LIKE LOWER(%s)
-                       OR LOWER(b.last_name) LIKE LOWER(%s)
-                       OR LOWER(b.email) LIKE LOWER(%s))
+                       OR LOWER(b.borrower_id) LIKE LOWER(%s))
                 GROUP BY b.id
-                ORDER BY b.last_name ASC, b.first_name ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%'))
+                ORDER BY b.borrower_id ASC
+            ''', (str(g.user_id), f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT b.*,
@@ -576,7 +642,7 @@ def get_borrowers():
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
                 WHERE b.user_id = %s
                 GROUP BY b.id
-                ORDER BY b.last_name ASC, b.first_name ASC
+                ORDER BY b.borrower_id ASC
             ''', (str(g.user_id),))
 
         borrowers = cur.fetchall()
@@ -599,11 +665,11 @@ def autocomplete_borrowers():
         cur = conn.cursor()
 
         cur.execute('''
-            SELECT id, first_name, last_name, email, phone
+            SELECT id, first_name, borrower_id
             FROM borrowers
             WHERE user_id = %s
-              AND (LOWER(first_name) LIKE LOWER(%s) OR LOWER(last_name) LIKE LOWER(%s))
-            ORDER BY last_name ASC, first_name ASC
+              AND (LOWER(first_name) LIKE LOWER(%s) OR LOWER(borrower_id) LIKE LOWER(%s))
+            ORDER BY borrower_id ASC
             LIMIT 10
         ''', (str(g.user_id), f'%{query}%', f'%{query}%'))
 
@@ -657,18 +723,17 @@ def create_borrower():
         conn = get_db_connection()
         cur = conn.cursor()
 
+        # Generate unique borrower_id
+        borrower_id = generate_borrower_id(data.get('first_name', ''), conn)
+
         cur.execute('''
-            INSERT INTO borrowers (user_id, first_name, last_name, email, phone, alt_phone, address)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO borrowers (user_id, first_name, borrower_id)
+            VALUES (%s, %s, %s)
             RETURNING *
         ''', (
             str(g.user_id),
             data.get('first_name'),
-            data.get('last_name'),
-            data.get('email'),
-            data.get('phone'),
-            data.get('alt_phone'),
-            data.get('address')
+            borrower_id
         ))
 
         borrower = cur.fetchone()
@@ -685,7 +750,7 @@ def create_borrower():
 @app.route('/api/borrowers/<borrower_id>', methods=['PUT'])
 @token_required
 def update_borrower(borrower_id):
-    """Update a borrower."""
+    """Update a borrower. Note: borrower_id remains immutable for stability."""
     try:
         data = request.json
         conn = get_db_connection()
@@ -693,17 +758,11 @@ def update_borrower(borrower_id):
 
         cur.execute('''
             UPDATE borrowers
-            SET first_name = %s, last_name = %s, email = %s,
-                phone = %s, alt_phone = %s, address = %s
+            SET first_name = %s
             WHERE id = %s AND user_id = %s
             RETURNING *
         ''', (
             data.get('first_name'),
-            data.get('last_name'),
-            data.get('email'),
-            data.get('phone'),
-            data.get('alt_phone'),
-            data.get('address'),
             borrower_id,
             str(g.user_id)
         ))
@@ -778,8 +837,9 @@ def get_checkouts():
             cur.execute('''
                 SELECT co.*,
                        b.title, b.author, b.isbn, b.barcode,
+                       b.cover_medium, b.cover_large,
                        bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
-                       br.first_name, br.last_name, br.email, br.phone,
+                       br.first_name, br.borrower_id,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co
                 JOIN book_copies bc ON co.copy_id = bc.id
@@ -788,7 +848,7 @@ def get_checkouts():
                 WHERE co.user_id = %s AND co.status = 'Checked Out'
                   AND (LOWER(b.title) LIKE LOWER(%s)
                        OR LOWER(br.first_name) LIKE LOWER(%s)
-                       OR LOWER(br.last_name) LIKE LOWER(%s)
+                       OR LOWER(br.borrower_id) LIKE LOWER(%s)
                        OR b.barcode LIKE %s)
                 ORDER BY co.checkout_date ASC
             ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
@@ -796,8 +856,9 @@ def get_checkouts():
             cur.execute('''
                 SELECT co.*,
                        b.title, b.author, b.isbn, b.barcode,
+                       b.cover_medium, b.cover_large,
                        bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
-                       br.first_name, br.last_name, br.email, br.phone,
+                       br.first_name, br.borrower_id,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co
                 JOIN book_copies bc ON co.copy_id = bc.id
@@ -974,7 +1035,7 @@ def get_checkout_history():
             SELECT co.*,
                    b.title, b.author, b.isbn,
                    bc.copy_number,
-                   br.first_name, br.last_name, br.email,
+                   br.first_name, br.borrower_id,
                    EXTRACT(DAY FROM (COALESCE(co.return_date, CURRENT_TIMESTAMP) - co.checkout_date)) as duration_days
             FROM checkouts co
             JOIN book_copies bc ON co.copy_id = bc.id
@@ -997,7 +1058,7 @@ def get_checkout_history():
             query += ''' AND (LOWER(b.title) LIKE LOWER(%s)
                            OR LOWER(b.author) LIKE LOWER(%s)
                            OR LOWER(br.first_name) LIKE LOWER(%s)
-                           OR LOWER(br.last_name) LIKE LOWER(%s))'''
+                           OR LOWER(br.borrower_id) LIKE LOWER(%s))'''
             search_param = f'%{search}%'
             params.extend([search_param, search_param, search_param, search_param])
 
@@ -1168,7 +1229,7 @@ def get_follow_ups():
                    co.checkout_date, co.due_date,
                    b.title, b.author,
                    bc.copy_number,
-                   br.first_name, br.last_name, br.email, br.phone,
+                   br.first_name, br.borrower_id,
                    EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
             FROM follow_ups fu
             JOIN checkouts co ON fu.checkout_id = co.id

@@ -98,8 +98,8 @@ function CheckoutHistory() {
                     <td className="text-gray-300">#{record.copy_number}</td>
                     <td>
                       <div>
-                        <p className="text-white">{record.first_name} {record.last_name}</p>
-                        <p className="text-sm text-gray-400">{record.email}</p>
+                        <p className="text-white">{record.first_name}</p>
+                        <p className="text-sm text-gray-400">ID: {record.borrower_id}</p>
                       </div>
                     </td>
                     <td className="text-gray-300">

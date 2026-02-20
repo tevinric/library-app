@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLibrary API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            border: 2px solid #444;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #333;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .cover-preview {
+            margin-top: 20px;
+        }
+        .cover-preview img {
+            max-width: 200px;
+            border: 2px solid #0066cc;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .field {
+            margin: 10px 0;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+        .field-label {
+            color: #888;
+            font-size: 12px;
+        }
+        .field-value {
+            color: #fff;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OpenLibrary API Test Tool</h1>
+        <p>Test the OpenLibrary API to see what data is returned for an ISBN</p>
+
+        <div>
+            <input type="text" id="isbn" placeholder="Enter ISBN (e.g., 9780143038092)" value="9780143038092">
+            <button onclick="testAPI()">Test API</button>
+        </div>
+
+        <div id="result" class="result" style="display:none;"></div>
+        <div id="parsed" style="display:none;"></div>
+        <div id="covers" class="cover-preview" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const isbn = document.getElementById('isbn').value.trim().replace(/[-\s]/g, '');
+            const resultDiv = document.getElementById('result');
+            const parsedDiv = document.getElementById('parsed');
+            const coversDiv = document.getElementById('covers');
+
+            if (!isbn) {
+                alert('Please enter an ISBN');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="success">⏳ Fetching data from OpenLibrary...</span>';
+            parsedDiv.style.display = 'none';
+            coversDiv.style.display = 'none';
+
+            try {
+                const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`;
+                console.log('Fetching:', url);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                console.log('Response:', data);
+
+                const bookKey = `ISBN:${isbn}`;
+                const bookData = data[bookKey];
+
+                if (!bookData) {
+                    resultDiv.innerHTML = '<span class="error">❌ Book not found in OpenLibrary</span>';
+                    return;
+                }
+
+                // Display raw response
+                resultDiv.innerHTML = '<h3>Raw API Response:</h3>' + JSON.stringify(data, null, 2);
+
+                // Parse and display key fields
+                parsedDiv.style.display = 'block';
+                parsedDiv.innerHTML = '<h3>Parsed Book Data:</h3>';
+
+                const fields = [
+                    { label: 'Title', value: bookData.title },
+                    { label: 'Authors', value: bookData.authors ? bookData.authors.map(a => a.name).join(', ') : 'N/A' },
+                    { label: 'Publisher', value: bookData.publishers ? bookData.publishers[0]?.name : 'N/A' },
+                    { label: 'Publish Date', value: bookData.publish_date || 'N/A' },
+                    { label: 'Pages', value: bookData.number_of_pages || 'N/A' },
+                    { label: 'OpenLibrary Key', value: bookData.key || 'N/A' },
+                    { label: 'OpenLibrary URL', value: bookData.url || 'N/A' },
+                    { label: 'Cover Small', value: bookData.cover?.small || 'N/A' },
+                    { label: 'Cover Medium', value: bookData.cover?.medium || 'N/A' },
+                    { label: 'Cover Large', value: bookData.cover?.large || 'N/A' },
+                ];
+
+                fields.forEach(field => {
+                    parsedDiv.innerHTML += `
+                        <div class="field">
+                            <div class="field-label">${field.label}</div>
+                            <div class="field-value">${field.value}</div>
+                        </div>
+                    `;
+                });
+
+                // Display covers if available
+                if (bookData.cover) {
+                    coversDiv.style.display = 'block';
+                    coversDiv.innerHTML = '<h3>Book Covers:</h3>';
+
+                    if (bookData.cover.small) {
+                        coversDiv.innerHTML += `<div><strong>Small:</strong><br><img src="${bookData.cover.small}" onerror="this.parentElement.innerHTML='<span class=error>Failed to load</span>'"></div>`;
+                    }
+                    if (bookData.cover.medium) {
+                        coversDiv.innerHTML += `<div><strong>Medium:</strong><br><img src="${bookData.cover.medium}" onerror="this.parentElement.innerHTML='<span class=error>Failed to load</span>'"></div>`;
+                    }
+                    if (bookData.cover.large) {
+                        coversDiv.innerHTML += `<div><strong>Large:</strong><br><img src="${bookData.cover.large}" onerror="this.parentElement.innerHTML='<span class=error>Failed to load</span>'"></div>`;
+                    }
+                } else {
+                    coversDiv.style.display = 'block';
+                    coversDiv.innerHTML = '<h3>❌ No cover images available for this book</h3>';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        // Test on page load
+        window.onload = () => {
+            testAPI();
+        };
+    </script>
+</body>
+</html>

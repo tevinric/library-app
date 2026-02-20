@@ -119,15 +119,12 @@ function FollowUps() {
 
                   <div className="flex-1">
                     <p className="text-sm text-gray-400">Borrowed By</p>
-                    <p className="text-white font-medium">
-                      {followUp.first_name} {followUp.last_name}
-                    </p>
-                    <p className="text-gray-400 text-sm">{followUp.email}</p>
-                    <p className="text-gray-400 text-sm">{followUp.phone}</p>
+                    <p className="text-white font-medium">{followUp.first_name}</p>
+                    <p className="text-gray-400 text-sm">ID: {followUp.borrower_id}</p>
                   </div>
 
                   <div className="flex-1 text-right">
-                    <p className="text-sm text-gray-400">Checked Out</p>
+                    <p className="text-sm text-gray-400">Borrowed</p>
                     <p className="text-white">
                       {formatDistanceToNow(new Date(followUp.checkout_date), { addSuffix: true })}
                     </p>
@@ -196,7 +193,7 @@ function FollowUps() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <p className="text-white font-medium mb-4">
-                  {selectedFollowUp.title} - {selectedFollowUp.first_name} {selectedFollowUp.last_name}
+                  {selectedFollowUp.title} - {selectedFollowUp.first_name} ({selectedFollowUp.borrower_id})
                 </p>
               </div>
 
