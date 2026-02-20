@@ -6,6 +6,8 @@ import { TrashIcon } from '../components/Icons'
 function FollowUps() {
   const [followUps, setFollowUps] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Update modal
   const [showModal, setShowModal] = useState(false)
   const [selectedFollowUp, setSelectedFollowUp] = useState(null)
   const [updateData, setUpdateData] = useState({
@@ -13,6 +15,11 @@ function FollowUps() {
     contacted_date: '',
     resolution_notes: ''
   })
+
+  // Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     loadFollowUps()
@@ -45,7 +52,6 @@ function FollowUps() {
     try {
       setLoading(true)
       await updateFollowUp(selectedFollowUp.id, updateData)
-      alert('Follow-up updated successfully!')
       setShowModal(false)
       setSelectedFollowUp(null)
       loadFollowUps()
@@ -56,28 +62,32 @@ function FollowUps() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this follow-up?')) return
+  const openDeleteModal = (followUp) => {
+    setDeleteTarget(followUp)
+    setShowDeleteModal(true)
+  }
 
+  const confirmDelete = async () => {
     try {
-      setLoading(true)
-      await deleteFollowUp(id)
-      alert('Follow-up deleted successfully!')
+      setDeleteLoading(true)
+      await deleteFollowUp(deleteTarget.id)
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
       loadFollowUps()
     } catch (error) {
       alert('Error deleting follow-up: ' + error.message)
     } finally {
-      setLoading(false)
+      setDeleteLoading(false)
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'bg-warning-900/50 text-warning-300'
-      case 'Contacted': return 'bg-primary-900/50 text-primary-300'
-      case 'Resolved': return 'bg-success-900/50 text-success-300'
-      case 'Escalated': return 'bg-danger-900/50 text-danger-300'
-      default: return 'bg-gray-600 text-gray-300'
+      case 'Pending':   return 'bg-indigo-900/50 text-indigo-300 border border-indigo-500/40'
+      case 'Contacted': return 'bg-primary-900/50 text-primary-300 border border-primary-500/40'
+      case 'Resolved':  return 'bg-success-900/50 text-success-300 border border-success-500/40'
+      case 'Escalated': return 'bg-danger-900/50 text-danger-300 border border-danger-500/40'
+      default:          return 'bg-gray-600 text-gray-300'
     }
   }
 
@@ -172,7 +182,7 @@ function FollowUps() {
                     📝 Update
                   </button>
                   <button
-                    onClick={() => handleDelete(followUp.id)}
+                    onClick={() => openDeleteModal(followUp)}
                     className="btn-danger text-sm flex items-center gap-2"
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -241,6 +251,49 @@ function FollowUps() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deleteTarget && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-danger-900/50 border border-danger-500/50 flex items-center justify-center flex-shrink-0">
+                <TrashIcon className="w-5 h-5 text-danger-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Delete Follow-up</h2>
+                <p className="text-gray-400 text-sm">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-700/60 rounded-lg p-4 mb-6">
+              <p className="text-white font-semibold">{deleteTarget.title}</p>
+              <p className="text-gray-400 text-sm">Copy #{deleteTarget.copy_number}</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Borrowed by <span className="text-white">{deleteTarget.first_name}</span>
+                <span className="text-primary-400 font-mono ml-1">({deleteTarget.borrower_id})</span>
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+                className="btn-danger flex items-center gap-2"
+              >
+                <TrashIcon className="w-4 h-4" />
+                {deleteLoading ? 'Deleting...' : 'Delete Follow-up'}
+              </button>
+            </div>
           </div>
         </div>
       )}

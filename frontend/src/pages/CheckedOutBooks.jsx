@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getCheckouts, createFollowUp, getFollowUps } from '../api'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -9,9 +10,10 @@ const FlagIcon = ({ className = "w-4 h-4" }) => (
 )
 
 function CheckedOutBooks() {
+  const [searchParams] = useSearchParams()
   const [checkouts, setCheckouts] = useState([])
   const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchParams.get('search') || '')
   const [followUpIds, setFollowUpIds] = useState(new Set())
 
   // Follow-up modal

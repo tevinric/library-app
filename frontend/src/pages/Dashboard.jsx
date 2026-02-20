@@ -9,8 +9,7 @@ import {
   UsersIcon,
   StarIcon,
   BellIcon,
-  TrendingUpIcon,
-  AlertIcon
+  TrendingUpIcon
 } from '../components/Icons'
 
 function Dashboard() {
@@ -186,41 +185,46 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Alerts */}
+      {/* Attention Required */}
       {(stats.overdue_checkouts > 0 || stats.pending_follow_ups > 0) && (
         <div className="card">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <AlertIcon className="w-6 h-6 text-warning-400" />
-            <span>System Alerts</span>
-          </h2>
-          <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-white mb-5">Attention Required</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {stats.overdue_checkouts > 0 && (
-              <Link to="/checked-out" className="alert-danger flex items-start gap-4 hover:border-danger-400 transition-all">
+              <Link
+                to="/checked-out"
+                className="flex items-start gap-4 p-4 rounded-xl bg-danger-900/20 border border-danger-500/40 hover:border-danger-400/70 hover:bg-danger-900/30 transition-all duration-200"
+              >
                 <div className="icon-circle from-danger-500 to-danger-600 w-10 h-10 flex-shrink-0">
                   <ClockIcon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-danger-200 font-medium">
-                    <strong className="text-danger-100 text-lg">{stats.overdue_checkouts}</strong> books are overdue
+                  <p className="text-white font-semibold text-lg leading-tight">
+                    {stats.overdue_checkouts} overdue
                   </p>
                   <p className="text-danger-300 text-sm mt-1">
-                    These items require immediate attention →
+                    {stats.overdue_checkouts === 1 ? 'Book is' : 'Books are'} past due date
                   </p>
+                  <p className="text-gray-500 text-xs mt-2">View Borrowed Books →</p>
                 </div>
               </Link>
             )}
             {stats.pending_follow_ups > 0 && (
-              <Link to="/follow-ups" className="alert-warning flex items-start gap-4 hover:border-warning-400 transition-all">
-                <div className="icon-circle from-warning-500 to-warning-600 w-10 h-10 flex-shrink-0">
+              <Link
+                to="/follow-ups"
+                className="flex items-start gap-4 p-4 rounded-xl bg-indigo-900/20 border border-indigo-500/40 hover:border-indigo-400/70 hover:bg-indigo-900/30 transition-all duration-200"
+              >
+                <div className="icon-circle from-indigo-500 to-indigo-600 w-10 h-10 flex-shrink-0">
                   <BellIcon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-warning-200 font-medium">
-                    <strong className="text-warning-100 text-lg">{stats.pending_follow_ups}</strong> checkouts need follow-up
+                  <p className="text-white font-semibold text-lg leading-tight">
+                    {stats.pending_follow_ups} follow-up{stats.pending_follow_ups !== 1 ? 's' : ''}
                   </p>
-                  <p className="text-warning-300 text-sm mt-1">
-                    Review and update status →
+                  <p className="text-indigo-300 text-sm mt-1">
+                    Pending borrower contact
                   </p>
+                  <p className="text-gray-500 text-xs mt-2">View Follow Ups →</p>
                 </div>
               </Link>
             )}

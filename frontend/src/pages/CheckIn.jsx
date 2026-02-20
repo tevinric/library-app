@@ -58,7 +58,6 @@ function CheckIn() {
 
   // ── Manual search ─────────────────────────────────────────────
   const searchBooks = async () => {
-    if (!search.trim()) return
     try {
       setLoading(true)
       const response = await getBooks(search)
@@ -329,6 +328,9 @@ function CheckIn() {
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Copy</p>
                             <p className="text-white font-bold text-xl">#{copy.copy_number}</p>
                             {copy.condition && <p className="text-gray-400 text-xs mt-0.5">{copy.condition}</p>}
+                            {copy.location && (
+                              <p className="text-primary-400 text-xs mt-1 font-medium">📍 {copy.location}</p>
+                            )}
                           </div>
 
                           {/* Borrower */}
@@ -401,6 +403,9 @@ function CheckIn() {
                 {selectedCopy.condition && (
                   <p className="text-gray-400 text-sm">Condition: {selectedCopy.condition}</p>
                 )}
+                {selectedCopy.location && (
+                  <p className="text-primary-400 text-sm font-medium mt-1">📍 Return to: {selectedCopy.location}</p>
+                )}
               </div>
 
               <div className="border-t border-gray-600 pt-4">
@@ -460,6 +465,12 @@ function CheckIn() {
                 <p className="text-white font-semibold">{returnResult.book.title}</p>
                 <p className="text-gray-400 text-sm">Copy #{returnResult.copy.copy_number}</p>
               </div>
+              {returnResult.copy.location && (
+                <div className="border-t border-gray-600 pt-4">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Reshelve At</p>
+                  <p className="text-primary-400 font-semibold text-lg">📍 {returnResult.copy.location}</p>
+                </div>
+              )}
               <div className="border-t border-gray-600 pt-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Returned By</p>
                 <p className="text-white font-semibold">{returnResult.copy.checkout_info?.borrower_name}</p>

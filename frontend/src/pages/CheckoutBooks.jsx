@@ -53,21 +53,14 @@ function CheckoutBooks() {
     try {
       setLoading(true)
       const response = await getBookCopies(book.id)
-      const available = response.data.filter(c => c.status === 'Available')
-      setCopies(available)
-      setSelectedBook(book)
-      setStep(2)
+      const allCopies = response.data
+      const availableCopies = allCopies.filter(c => c.status === 'Available')
 
-      // Show message if no copies available
-      if (available.length === 0 && response.data.length === 0) {
-        // No copies exist at all
-        alert('⚠️ This book has been registered but no copies have been added yet.\n\nPlease add copies from the Book Registration page before checking out.')
-      } else if (available.length === 0) {
-        // Copies exist but none available
-        alert('⚠️ All copies of this book are currently checked out.\n\nNo copies available for checkout at this time.')
-      }
+      // Open the same confirmation modal used by the barcode scan path
+      setScannedBookData({ book: { ...book, copies: allCopies }, availableCopies })
+      setShowBookConfirmModal(true)
     } catch (error) {
-      alert('Error loading copies: ' + error.message)
+      alert('Error loading book details: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -336,11 +329,20 @@ function CheckoutBooks() {
           {books.length > 0 && (
             <div className="space-y-3">
               {books.map((book) => (
-                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{book.title}</h3>
-                    <p className="text-gray-400">by {book.author}</p>
-                    <div className="mt-2 space-y-1">
+                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex items-center gap-4">
+                  {/* Cover image */}
+                  {(book.cover_large || book.cover_medium) && (
+                    <img
+                      src={book.cover_large || book.cover_medium}
+                      alt={book.title}
+                      className="w-14 h-auto rounded shadow-lg flex-shrink-0"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-white truncate">{book.title}</h3>
+                    <p className="text-gray-400 text-sm">by {book.author}</p>
+                    <div className="mt-1 space-y-0.5">
                       {book.isbn && <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>}
                       {book.barcode && <p className="text-sm text-gray-500">Barcode: {book.barcode}</p>}
                       <p className="text-sm">
@@ -351,7 +353,8 @@ function CheckoutBooks() {
                   </div>
                   <button
                     onClick={() => selectBook(book)}
-                    className="btn-primary"
+                    disabled={loading}
+                    className="btn-primary flex-shrink-0"
                   >
                     Select
                   </button>
@@ -488,6 +491,19 @@ function CheckoutBooks() {
                           </div>
                         )
                       })}
+                    </div>
+
+                    {/* Link to Borrowed Books filtered to this book */}
+                    <div className="mt-4 pt-4 border-t border-blue-500/30">
+                      <Link
+                        to={`/checked-out?search=${encodeURIComponent(selectedBook?.title || '')}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-700/50 hover:bg-blue-600/60 text-blue-100 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        View in Borrowed Books →
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -736,6 +752,20 @@ function CheckoutBooks() {
                           </div>
                         )
                       })}
+                    </div>
+
+                    {/* Link to Borrowed Books filtered to this book */}
+                    <div className="mt-3 pt-3 border-t border-blue-500/30">
+                      <Link
+                        to={`/checked-out?search=${encodeURIComponent(scannedBookData.book.title || '')}`}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-700/50 hover:bg-blue-600/60 text-blue-100 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
+                        onClick={cancelBookConfirm}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        View in Borrowed Books →
+                      </Link>
                     </div>
                   </div>
                 </div>
