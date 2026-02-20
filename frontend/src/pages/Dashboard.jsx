@@ -50,137 +50,153 @@ function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400 mt-1">Library overview and statistics</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard</h1>
+        <p className="text-gray-400 mt-1 text-sm sm:text-base">Library overview and statistics</p>
       </div>
 
-      {/* Stats Grid - Clickable Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats Grid - Compact horizontal tiles */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Link to="/books/search" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-primary-500 to-primary-600">
-              <BookIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-primary-500 to-primary-600">
+              <BookIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Total Books</p>
+              <p className="stat-number leading-tight mt-0.5">{stats.total_books || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Unique titles</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Total Books</h3>
-          <p className="stat-number">{stats.total_books || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Unique titles</p>
         </Link>
 
         <Link to="/books/search" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-gray-600 to-gray-700">
-              <CollectionIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-gray-600 to-gray-700">
+              <CollectionIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Copies</p>
+              <p className="stat-number leading-tight mt-0.5">{stats.total_copies || 0}</p>
+              <p className="text-xs text-success-400 mt-0.5 hidden sm:block font-medium">{stats.available_copies || 0} available</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Total Copies</h3>
-          <p className="stat-number">{stats.total_copies || 0}</p>
-          <p className="text-sm text-success-400 mt-2 font-medium">{stats.available_copies || 0} available</p>
         </Link>
 
         <Link to="/checked-out" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-success-500 to-success-600">
-              <CheckoutIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-success-500 to-success-600">
+              <CheckoutIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Checkouts</p>
+              <p className="text-xl sm:text-2xl font-bold text-success-400 leading-tight mt-0.5">{stats.active_checkouts || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Currently out</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Active Checkouts</h3>
-          <p className="text-3xl font-bold text-success-400">{stats.active_checkouts || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Currently checked out</p>
         </Link>
 
         <Link to="/checked-out" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-danger-500 to-danger-600">
-              <ClockIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-danger-500 to-danger-600">
+              <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Overdue</p>
+              <p className="text-xl sm:text-2xl font-bold text-danger-400 leading-tight mt-0.5">{stats.overdue_checkouts || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Past due date</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Overdue</h3>
-          <p className="text-3xl font-bold text-danger-400">{stats.overdue_checkouts || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Past due date</p>
         </Link>
 
         <Link to="/users" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-primary-500 to-primary-600">
-              <UsersIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-primary-500 to-primary-600">
+              <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Borrowers</p>
+              <p className="stat-number leading-tight mt-0.5">{stats.total_borrowers || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Registered users</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Total Borrowers</h3>
-          <p className="stat-number">{stats.total_borrowers || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Registered users</p>
         </Link>
 
         <Link to="/wishlist" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-warning-500 to-warning-600">
-              <StarIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-warning-500 to-warning-600">
+              <StarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Wishlist</p>
+              <p className="text-xl sm:text-2xl font-bold text-warning-400 leading-tight mt-0.5">{stats.wishlist_items || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Requested books</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Wishlist Items</h3>
-          <p className="text-3xl font-bold text-warning-400">{stats.wishlist_items || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Requested books</p>
         </Link>
 
         <Link to="/follow-ups" className="stat-card group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-warning-500 to-warning-600">
-              <BellIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-warning-500 to-warning-600">
+              <BellIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Follow-ups</p>
+              <p className="text-xl sm:text-2xl font-bold text-warning-400 leading-tight mt-0.5">{stats.pending_follow_ups || 0}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Need attention</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Pending Follow-ups</h3>
-          <p className="text-3xl font-bold text-warning-400">{stats.pending_follow_ups || 0}</p>
-          <p className="text-sm text-gray-500 mt-2">Need attention</p>
         </Link>
 
         <div className="stat-card">
-          <div className="flex items-start justify-between mb-4">
-            <div className="icon-circle from-primary-500 to-primary-600">
-              <TrendingUpIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="stat-icon from-primary-500 to-primary-600">
+              <TrendingUpIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Utilization</p>
+              <p className="text-xl sm:text-2xl font-bold text-primary-400 leading-tight mt-0.5">
+                {stats.total_copies > 0
+                  ? Math.round((stats.active_checkouts / stats.total_copies) * 100)
+                  : 0}%
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">In circulation</p>
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium mb-2">Utilization Rate</h3>
-          <p className="text-3xl font-bold text-primary-400">
-            {stats.total_copies > 0
-              ? Math.round((stats.active_checkouts / stats.total_copies) * 100)
-              : 0}%
-          </p>
-          <p className="text-sm text-gray-500 mt-2">Books in circulation</p>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="card">
-        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
           <span className="gradient-text">Quick Actions</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link to="/books/register" className="btn-primary text-center flex items-center justify-center gap-2">
-            <BookIcon className="w-5 h-5" />
-            <span>Register New Book</span>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Link to="/books/register" className="btn-primary text-center flex items-center justify-center gap-2 text-sm">
+            <BookIcon className="w-4 h-4" />
+            <span className="truncate">Register Book</span>
           </Link>
-          <Link to="/checkout" className="btn-success text-center flex items-center justify-center gap-2">
-            <CheckoutIcon className="w-5 h-5" />
-            <span>Checkout Book</span>
+          <Link to="/checkout" className="btn-success text-center flex items-center justify-center gap-2 text-sm">
+            <CheckoutIcon className="w-4 h-4" />
+            <span className="truncate">Checkout Book</span>
           </Link>
-          <Link to="/check-in" className="btn-primary text-center flex items-center justify-center gap-2">
-            <CollectionIcon className="w-5 h-5" />
-            <span>Return Book</span>
+          <Link to="/check-in" className="btn-primary text-center flex items-center justify-center gap-2 text-sm">
+            <CollectionIcon className="w-4 h-4" />
+            <span className="truncate">Return Book</span>
           </Link>
-          <Link to="/books/search" className="btn-secondary text-center flex items-center justify-center gap-2">
-            <BookIcon className="w-5 h-5" />
-            <span>Search Books</span>
+          <Link to="/books/search" className="btn-secondary text-center flex items-center justify-center gap-2 text-sm">
+            <BookIcon className="w-4 h-4" />
+            <span className="truncate">Search Books</span>
           </Link>
-          <Link to="/users" className="btn-secondary text-center flex items-center justify-center gap-2">
-            <UsersIcon className="w-5 h-5" />
-            <span>Manage Users</span>
+          <Link to="/users" className="btn-secondary text-center flex items-center justify-center gap-2 text-sm">
+            <UsersIcon className="w-4 h-4" />
+            <span className="truncate">Manage Users</span>
           </Link>
-          <Link to="/wishlist" className="btn-secondary text-center flex items-center justify-center gap-2">
-            <StarIcon className="w-5 h-5" />
-            <span>View Wishlist</span>
+          <Link to="/wishlist" className="btn-secondary text-center flex items-center justify-center gap-2 text-sm">
+            <StarIcon className="w-4 h-4" />
+            <span className="truncate">View Wishlist</span>
           </Link>
         </div>
       </div>

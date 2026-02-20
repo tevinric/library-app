@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
-import { getCheckoutHistory } from '../api'
+import { getCheckoutHistory, getBookByBarcode } from '../api'
 import { format } from 'date-fns'
-import { SearchIcon } from '../components/Icons'
+import { SearchIcon, BookIcon } from '../components/Icons'
+import BarcodeScanner from '../components/BarcodeScanner'
 
 function CheckoutHistory() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [scannedBook, setScannedBook] = useState(null)
 
   useEffect(() => {
     loadHistory()
   }, [])
 
-  const loadHistory = async () => {
+  const loadHistory = async (searchTerm) => {
+    const term = searchTerm !== undefined ? searchTerm : search
     try {
       setLoading(true)
-      const response = await getCheckoutHistory({ search })
+      const response = await getCheckoutHistory({ search: term })
       setHistory(response.data)
     } catch (error) {
       console.error('Error loading history:', error)
@@ -25,7 +28,34 @@ function CheckoutHistory() {
   }
 
   const handleSearch = () => {
-    loadHistory()
+    setScannedBook(null)
+    loadHistory(search)
+  }
+
+  const handleBarcodeScan = async (barcode) => {
+    try {
+      setLoading(true)
+      const response = await getBookByBarcode(barcode)
+      const book = response.data
+      setScannedBook(book)
+      setSearch(book.title)
+      const historyResponse = await getCheckoutHistory({ search: book.title })
+      setHistory(historyResponse.data)
+    } catch (error) {
+      if (error.response?.status === 404) {
+        alert('Book not found. Please check the barcode or register the book first.')
+      } else {
+        alert('Error scanning barcode: ' + error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const clearScannedBook = () => {
+    setScannedBook(null)
+    setSearch('')
+    loadHistory('')
   }
 
   if (loading) {
@@ -44,9 +74,28 @@ function CheckoutHistory() {
         <p className="text-gray-400 mt-1">View complete checkout history</p>
       </div>
 
-      {/* Search */}
+      {/* Barcode Scanner */}
       <div className="card">
-        <div className="flex gap-4">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Quick Lookup: Scan Barcode
+        </label>
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          placeholder="Scan book barcode to view its history..."
+          autoFocus={true}
+          disabled={loading}
+        />
+        <p className="text-xs text-gray-500 mt-2">
+          Scan a book barcode to instantly filter history to that book
+        </p>
+      </div>
+
+      {/* Text Search */}
+      <div className="card">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Or search manually
+        </label>
+        <div className="flex gap-2">
           <input
             type="text"
             value={search}
@@ -55,24 +104,122 @@ function CheckoutHistory() {
             className="flex-1 px-4 py-2"
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <button onClick={handleSearch} className="btn-primary flex items-center gap-2">
+          <button onClick={handleSearch} className="btn-primary flex items-center gap-2 flex-shrink-0">
             <SearchIcon className="w-5 h-5" />
-            <span>Search</span>
+            <span className="hidden sm:inline">Search</span>
           </button>
         </div>
       </div>
 
+      {/* Scanned Book Banner */}
+      {scannedBook && (
+        <div className="alert-success">
+          <div className="flex items-center gap-4">
+            {(scannedBook.cover_small || scannedBook.cover_medium) ? (
+              <img
+                src={scannedBook.cover_small || scannedBook.cover_medium}
+                alt={scannedBook.title}
+                className="w-12 h-auto rounded shadow-lg flex-shrink-0"
+                onError={(e) => e.target.style.display = 'none'}
+              />
+            ) : (
+              <div className="w-12 h-16 bg-success-900/50 rounded flex items-center justify-center flex-shrink-0">
+                <BookIcon className="w-6 h-6 text-success-400" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-success-100 font-semibold truncate">{scannedBook.title}</p>
+              <p className="text-success-200 text-sm">by {scannedBook.author}</p>
+              {scannedBook.isbn && (
+                <p className="text-success-300 text-xs mt-0.5">ISBN: {scannedBook.isbn}</p>
+              )}
+            </div>
+            <button
+              onClick={clearScannedBook}
+              className="btn-secondary text-sm flex-shrink-0"
+            >
+              Clear Filter
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* History List */}
       {history.length === 0 ? (
         <div className="card text-center">
-          <p className="text-gray-400">No checkout history found</p>
+          <p className="text-gray-400">
+            {scannedBook
+              ? `No checkout history found for "${scannedBook.title}"`
+              : search
+              ? 'No checkout history found for that search'
+              : 'No checkout history found'}
+          </p>
         </div>
       ) : (
         <div className="card">
           <h2 className="text-xl font-semibold text-white mb-4">
             {history.length} checkout record{history.length !== 1 ? 's' : ''}
+            {scannedBook && (
+              <span className="text-sm font-normal text-gray-400 ml-2">
+                for "{scannedBook.title}"
+              </span>
+            )}
           </h2>
-          <div className="overflow-x-auto">
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {history.map((record) => (
+              <div key={record.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white truncate">{record.title}</p>
+                    <p className="text-sm text-gray-400">by {record.author}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                    record.status === 'Returned'
+                      ? 'bg-success-900/50 text-success-300'
+                      : record.status === 'Checked Out'
+                      ? 'bg-primary-900/50 text-primary-300'
+                      : 'bg-danger-900/50 text-danger-300'
+                  }`}>
+                    {record.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Borrower</p>
+                    <p className="text-white">{record.first_name}</p>
+                    <p className="text-gray-400 text-xs">ID: {record.borrower_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Copy</p>
+                    <p className="text-gray-300">#{record.copy_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Checkout Date</p>
+                    <p className="text-gray-300">{format(new Date(record.checkout_date), 'MMM d, yyyy')}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Due Date</p>
+                    <p className="text-gray-300">{format(new Date(record.due_date), 'MMM d, yyyy')}</p>
+                  </div>
+                  {record.return_date && (
+                    <div>
+                      <p className="text-gray-500 text-xs uppercase tracking-wide">Returned</p>
+                      <p className="text-gray-300">{format(new Date(record.return_date), 'MMM d, yyyy')}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Duration</p>
+                    <p className="text-gray-300">{Math.floor(record.duration_days)} days</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>

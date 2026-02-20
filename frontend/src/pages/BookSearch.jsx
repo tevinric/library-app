@@ -299,38 +299,42 @@ function BookSearch() {
         <label className="block text-sm font-medium text-gray-300 mb-2">
           {showBarcodeScanner ? 'Or search manually' : 'Search Books'}
         </label>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, author, ISBN, or barcode..."
-            className="flex-1 px-4 py-2"
-            onKeyPress={(e) => e.key === 'Enter' && loadBooks()}
-          />
-          <button onClick={loadBooks} className="btn-primary flex items-center gap-2">
-            <SearchIcon className="w-5 h-5" />
-            <span>Search</span>
-          </button>
-          {!showBarcodeScanner && (
-            <button
-              onClick={() => {
-                setShowBarcodeScanner(true)
-                setBooks([])
-                setSearch('')
-              }}
-              className="btn-secondary"
-            >
-              📷 Scan Barcode
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex gap-2 flex-1">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, author, ISBN, or barcode..."
+              className="flex-1 px-4 py-2"
+              onKeyPress={(e) => e.key === 'Enter' && loadBooks()}
+            />
+            <button onClick={loadBooks} className="btn-primary flex items-center gap-2 flex-shrink-0">
+              <SearchIcon className="w-5 h-5" />
+              <span>Search</span>
             </button>
-          )}
-          <button
-            onClick={() => setShowWishlistModal(true)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <StarIcon className="w-5 h-5" />
-            <span>Add to Wishlist</span>
-          </button>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            {!showBarcodeScanner && (
+              <button
+                onClick={() => {
+                  setShowBarcodeScanner(true)
+                  setBooks([])
+                  setSearch('')
+                }}
+                className="btn-secondary flex-1 sm:flex-none"
+              >
+                📷 Scan Barcode
+              </button>
+            )}
+            <button
+              onClick={() => setShowWishlistModal(true)}
+              className="btn-secondary flex items-center gap-2 flex-1 sm:flex-none"
+            >
+              <StarIcon className="w-5 h-5" />
+              <span>Add to Wishlist</span>
+            </button>
+          </div>
         </div>
       </div>
 

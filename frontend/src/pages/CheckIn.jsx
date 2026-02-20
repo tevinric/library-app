@@ -175,7 +175,7 @@ function CheckIn() {
         <label className="block text-sm font-medium text-gray-300 mb-2">
           Or search manually
         </label>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <input
             type="text"
             value={search}
@@ -184,7 +184,7 @@ function CheckIn() {
             placeholder="Search by title, author, ISBN, or barcode..."
             className="flex-1 px-4 py-2"
           />
-          <button onClick={searchBooks} disabled={loading} className="btn-primary">
+          <button onClick={searchBooks} disabled={loading} className="btn-primary flex-shrink-0">
             {loading ? 'Searching...' : 'Search'}
           </button>
         </div>
@@ -249,13 +249,13 @@ function CheckIn() {
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold text-white mb-6">Confirm Book to Return</h2>
 
-            <div className="flex gap-6 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
               {(confirmedBook.cover_large || confirmedBook.cover_medium) && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex sm:block justify-center">
                   <img
                     src={confirmedBook.cover_large || confirmedBook.cover_medium}
                     alt={confirmedBook.title}
-                    className="w-36 h-auto rounded-lg shadow-xl border-2 border-primary-500"
+                    className="w-28 sm:w-36 h-auto rounded-lg shadow-xl border-2 border-primary-500"
                     onError={(e) => e.target.style.display = 'none'}
                   />
                 </div>
@@ -284,7 +284,7 @@ function CheckIn() {
               Is this the correct book being returned? Click Confirm to proceed to copy selection.
             </p>
 
-            <div className="flex gap-4 justify-end">
+            <div className="flex flex-wrap gap-3 justify-end">
               <button onClick={cancelBookModal} className="btn-secondary">Cancel</button>
               <button onClick={confirmBook} disabled={loading} className="btn-primary">
                 {loading ? 'Loading copies...' : 'Confirm — Select Copy →'}
@@ -321,7 +321,7 @@ function CheckIn() {
 
                   return (
                     <div key={copy.id} className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600/80 transition-colors">
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                           {/* Copy # */}
                           <div>
@@ -365,7 +365,7 @@ function CheckIn() {
 
                         <button
                           onClick={() => selectCopy(copy)}
-                          className="btn-success flex-shrink-0"
+                          className="btn-success flex-shrink-0 w-full sm:w-auto"
                         >
                           <CheckInIcon className="w-4 h-4 inline mr-2" />
                           Return This Copy
@@ -435,7 +435,7 @@ function CheckIn() {
               This will mark the copy as returned and make it available for borrowing again.
             </p>
 
-            <div className="flex gap-4 justify-end">
+            <div className="flex flex-wrap gap-3 justify-end">
               <button onClick={cancelConfirmModal} className="btn-secondary">← Back</button>
               <button onClick={confirmReturn} disabled={loading} className="btn-success">
                 {loading ? 'Processing...' : 'Confirm Return'}

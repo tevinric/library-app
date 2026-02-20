@@ -380,7 +380,7 @@ function BookRegistration() {
           <div className="space-y-4">
             {books.map((book) => (
               <div key={book.id} className="bg-gray-700 rounded-lg p-4">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
@@ -394,7 +394,7 @@ function BookRegistration() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => selectedBookId === book.id ? setSelectedBookId(null) : loadCopies(book.id)}
                       className="btn-secondary text-sm"
@@ -787,7 +787,7 @@ function BookRegistration() {
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
                 disabled={loading}

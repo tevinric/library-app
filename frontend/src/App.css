@@ -32,7 +32,24 @@
 }
 
 .stat-card {
-  @apply bg-gradient-to-br from-gray-800 to-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-700/50 hover:border-primary-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 cursor-pointer hover:-translate-y-1;
+  @apply bg-gradient-to-br from-gray-800 to-gray-800/80 rounded-xl p-3 shadow-lg border border-gray-700/50 hover:border-primary-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 cursor-pointer hover:-translate-y-0.5;
+}
+
+@screen sm {
+  .stat-card {
+    @apply p-4;
+  }
+}
+
+/* Compact square icon for stat tiles */
+.stat-icon {
+  @apply w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md flex-shrink-0;
+}
+
+@screen sm {
+  .stat-icon {
+    @apply w-10 h-10;
+  }
 }
 
 /* Modal Styles */
@@ -41,7 +58,17 @@
 }
 
 .modal-content {
-  @apply bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-700/50 animate-slide-up;
+  @apply bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-700/50 animate-slide-up;
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+@screen sm {
+  .modal-content {
+    @apply p-6;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
 }
 
 /* Login Container - Premium Design */
@@ -66,7 +93,13 @@
 
 /* Stat Number Gradient */
 .stat-number {
-  @apply text-3xl font-bold bg-gradient-to-br from-white to-gray-300 bg-clip-text text-transparent;
+  @apply text-xl font-bold bg-gradient-to-br from-white to-gray-300 bg-clip-text text-transparent;
+}
+
+@screen sm {
+  .stat-number {
+    @apply text-2xl;
+  }
 }
 
 /* Alert Styles - More Premium */

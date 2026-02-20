@@ -136,12 +136,12 @@ function Wishlist() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-3xl font-bold text-white">Book Wishlist</h1>
           <p className="text-gray-400 mt-1">Requested books not in library</p>
         </div>
-        <button onClick={handleNewItem} className="btn-primary flex items-center gap-2">
+        <button onClick={handleNewItem} className="btn-primary flex items-center gap-2 self-start sm:self-auto">
           <StarIcon className="w-5 h-5" />
           <span>Add to Wishlist</span>
         </button>

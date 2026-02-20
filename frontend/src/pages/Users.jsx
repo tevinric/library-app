@@ -94,12 +94,12 @@ function Users() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-3xl font-bold text-white">Users (Borrowers)</h1>
           <p className="text-gray-400 mt-1">Manage library users and borrowers</p>
         </div>
-        <button onClick={handleNewBorrower} className="btn-primary">
+        <button onClick={handleNewBorrower} className="btn-primary self-start sm:self-auto">
           ➕ Add Borrower
         </button>
       </div>

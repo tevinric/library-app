@@ -268,20 +268,20 @@ function CheckoutBooks() {
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-2 sm:gap-4">
         <div className={`flex items-center ${step >= 1 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary-600' : 'bg-gray-700'}`}>1</span>
-          <span className="ml-2">Select Book</span>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 1 ? 'bg-primary-600' : 'bg-gray-700'}`}>1</span>
+          <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Book</span>
         </div>
-        <span className="text-gray-600">→</span>
+        <span className="text-gray-600 flex-shrink-0">→</span>
         <div className={`flex items-center ${step >= 2 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary-600' : 'bg-gray-700'}`}>2</span>
-          <span className="ml-2">Select Copy</span>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-700'}`}>2</span>
+          <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Copy</span>
         </div>
-        <span className="text-gray-600">→</span>
+        <span className="text-gray-600 flex-shrink-0">→</span>
         <div className={`flex items-center ${step >= 3 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary-600' : 'bg-gray-700'}`}>3</span>
-          <span className="ml-2">Select Borrower</span>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 3 ? 'bg-primary-600' : 'bg-gray-700'}`}>3</span>
+          <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Borrower</span>
         </div>
       </div>
 
@@ -609,7 +609,7 @@ function CheckoutBooks() {
             </div>
           </div>
 
-          <div className="flex gap-4 mt-4">
+          <div className="flex flex-wrap gap-3 mt-4">
             <button
               onClick={handleCheckout}
               disabled={!selectedBorrower || loading}
@@ -662,14 +662,14 @@ function CheckoutBooks() {
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold text-white mb-6">Confirm Book</h2>
 
-            <div className="flex gap-6 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
               {/* Book Cover */}
               {(scannedBookData.book.cover_large || scannedBookData.book.cover_medium) && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex sm:block justify-center">
                   <img
                     src={scannedBookData.book.cover_large || scannedBookData.book.cover_medium}
                     alt={scannedBookData.book.title}
-                    className="w-40 h-auto rounded-lg shadow-xl border-2 border-primary-500"
+                    className="w-32 sm:w-40 h-auto rounded-lg shadow-xl border-2 border-primary-500"
                     onError={(e) => e.target.style.display = 'none'}
                   />
                 </div>
@@ -772,7 +772,7 @@ function CheckoutBooks() {
               </div>
             )}
 
-            <div className="flex gap-4 justify-end">
+            <div className="flex flex-wrap gap-3 justify-end">
               <button onClick={cancelBookConfirm} className="btn-secondary">
                 Cancel
               </button>
