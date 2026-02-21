@@ -48,6 +48,8 @@ function BookSearch() {
     notes: '',
     status: ''
   })
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [bookToDelete, setBookToDelete] = useState(null)
 
   const loadBooks = async () => {
     try {
@@ -105,29 +107,32 @@ function BookSearch() {
     }
   }
 
-  const handleDeleteBook = async (book) => {
-    if (!confirm(`⚠️ Are you sure you want to delete "${book.title}"?\n\nThis will permanently remove the book and all its copies from the system.\n\nThis action cannot be undone!`)) {
-      return
-    }
+  const handleDeleteBook = (book) => {
+    setBookToDelete(book)
+    setShowDeleteConfirmModal(true)
+  }
 
+  const confirmDeleteBook = async () => {
+    if (!bookToDelete) return
     try {
       setLoading(true)
-      await deleteBook(book.id)
-      alert('✓ Book deleted successfully!')
-
-      // Refresh the book list
-      loadBooks()
+      setShowDeleteConfirmModal(false)
+      await deleteBook(bookToDelete.id)
 
       // Clear selection if this was the selected book
-      if (selectedBookId === book.id) {
+      if (selectedBookId === bookToDelete.id) {
         setSelectedBookId(null)
         setCopies([])
       }
+      setBookToDelete(null)
+
+      // Refresh the book list
+      await loadBooks()
     } catch (error) {
-      if (error.response?.status === 400 && error.response?.data?.error?.includes('checked out')) {
+      if (error.response?.data?.error?.includes('checked out')) {
         alert('❌ Cannot delete this book:\n\nThere are active checkouts for this book.\n\nPlease check in all copies before deleting.')
       } else {
-        alert('Error deleting book: ' + error.message)
+        alert('Error deleting book: ' + (error.response?.data?.error || error.message))
       }
     } finally {
       setLoading(false)
@@ -807,6 +812,36 @@ function BookSearch() {
                 <button type="button" onClick={() => setShowWishlistModal(false)} className="btn-secondary">Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmModal && bookToDelete && (
+        <div className="modal-overlay" onClick={() => { setShowDeleteConfirmModal(false); setBookToDelete(null) }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-white mb-2">Delete Book</h2>
+            <p className="text-gray-300 mb-1">Are you sure you want to delete:</p>
+            <p className="text-white font-semibold mb-4">"{bookToDelete.title}"</p>
+            <p className="text-danger-300 text-sm mb-6">
+              ⚠️ This will permanently remove the book and all its copies from the system. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDeleteBook}
+                disabled={loading}
+                className="btn-danger flex items-center gap-2"
+              >
+                <TrashIcon className="w-4 h-4" />
+                <span>{loading ? 'Deleting...' : 'Yes, Delete'}</span>
+              </button>
+              <button
+                onClick={() => { setShowDeleteConfirmModal(false); setBookToDelete(null) }}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

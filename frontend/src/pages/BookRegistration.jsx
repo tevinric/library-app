@@ -46,6 +46,10 @@ function BookRegistration() {
   })
   const [fetchingFromOpenLibrary, setFetchingFromOpenLibrary] = useState(false)
   const [openLibraryData, setOpenLibraryData] = useState(null)
+  const [showAddCopyPrompt, setShowAddCopyPrompt] = useState(false)
+  const [registeredBook, setRegisteredBook] = useState(null)
+  const [showAddCopyModal, setShowAddCopyModal] = useState(false)
+  const [newCopyData, setNewCopyData] = useState({ condition: 'Good', location: '', notes: '' })
 
   useEffect(() => {
     if (search.length > 0) {
@@ -185,7 +189,7 @@ function BookRegistration() {
       }
 
       const response = await createBook(bookData)
-      alert('✓ Book registered successfully!\n\nYou can now scan this book on other pages.')
+      const newBook = response.data
 
       // Reset form
       setFormData({
@@ -212,6 +216,11 @@ function BookRegistration() {
       setShowForm(false)
       setSearch('')
       setOpenLibraryData(null)
+
+      // Prompt to add a physical copy
+      setRegisteredBook(newBook)
+      setNewCopyData({ condition: 'Good', location: '', notes: '' })
+      setShowAddCopyPrompt(true)
     } catch (error) {
       alert('Error registering book: ' + error.message)
     } finally {
@@ -315,6 +324,28 @@ function BookRegistration() {
       } else {
         alert('Error searching by barcode: ' + error.message)
       }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateCopyAfterRegister = async (e) => {
+    e.preventDefault()
+    try {
+      setLoading(true)
+      await createBookCopy({
+        book_id: registeredBook.id,
+        condition: newCopyData.condition,
+        location: newCopyData.location || null,
+        notes: newCopyData.notes || null,
+        status: 'Available'
+      })
+      setShowAddCopyModal(false)
+      setRegisteredBook(null)
+      setNewCopyData({ condition: 'Good', location: '', notes: '' })
+      alert('✓ Copy added successfully!')
+    } catch (error) {
+      alert('Error adding copy: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -611,6 +642,101 @@ function BookRegistration() {
           )}
         </button>
       </div>
+
+      {/* Add Copy Prompt Modal - shown after book registration */}
+      {showAddCopyPrompt && registeredBook && (
+        <div className="modal-overlay">
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-success-500/20 flex items-center justify-center mx-auto mb-4">
+                <BookIcon className="w-6 h-6 text-success-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Book Registered!</h2>
+              <p className="text-gray-300 mb-1">
+                <span className="text-white font-medium">"{registeredBook.title}"</span> has been added to the system.
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                Would you like to add a physical copy to the library now?
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => { setShowAddCopyPrompt(false); setShowAddCopyModal(true) }}
+                  className="btn-success flex items-center gap-2"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span>Yes, Add a Copy</span>
+                </button>
+                <button
+                  onClick={() => { setShowAddCopyPrompt(false); setRegisteredBook(null) }}
+                  className="btn-secondary"
+                >
+                  No, Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Copy Modal - shown if librarian says yes to adding a copy */}
+      {showAddCopyModal && registeredBook && (
+        <div className="modal-overlay" onClick={() => { setShowAddCopyModal(false); setRegisteredBook(null) }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-white mb-1">Add Physical Copy</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Adding a copy for: <span className="text-white font-medium">{registeredBook.title}</span>
+            </p>
+            <form onSubmit={handleCreateCopyAfterRegister} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Condition</label>
+                <select
+                  value={newCopyData.condition}
+                  onChange={(e) => setNewCopyData({ ...newCopyData, condition: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                >
+                  <option value="Excellent">Excellent</option>
+                  <option value="Good">Good</option>
+                  <option value="Fair">Fair</option>
+                  <option value="Poor">Poor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <input
+                  type="text"
+                  value={newCopyData.location}
+                  onChange={(e) => setNewCopyData({ ...newCopyData, location: e.target.value })}
+                  placeholder="e.g., Shelf A3, Room 101"
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <textarea
+                  value={newCopyData.notes}
+                  onChange={(e) => setNewCopyData({ ...newCopyData, notes: e.target.value })}
+                  rows="2"
+                  placeholder="Optional notes about this copy"
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button type="submit" disabled={loading} className="btn-success flex items-center gap-2">
+                  <PlusIcon className="w-4 h-4" />
+                  <span>{loading ? 'Adding...' : 'Add Copy'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddCopyModal(false); setRegisteredBook(null) }}
+                  className="btn-secondary"
+                >
+                  Skip
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Registration Form */}
       {showForm && (
