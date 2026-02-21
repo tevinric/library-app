@@ -39,7 +39,7 @@ rclone version
 
 ### 2. Configure rclone for Google Drive
 
-**Option A: Interactive Configuration (Recommended for beginners)**
+**Option A: Interactive Configuration (If your VPS has a browser)**
 
 ```bash
 # Start rclone configuration
@@ -47,8 +47,8 @@ rclone config
 
 # Follow the prompts:
 # n) New remote
-# name> gdrive_backup
-# Storage> 18 (Google Drive)
+# name> zoe_library
+# Storage> drive
 # client_id> (Press Enter - leave blank)
 # client_secret> (Press Enter - leave blank)
 # scope> 1 (Full access)
@@ -60,36 +60,211 @@ rclone config
 
 A browser window will open. Sign in with your Google account and authorize rclone.
 
-**Option B: Remote Configuration (For VPS without browser)**
+---
 
-If your VPS doesn't have a graphical interface:
+**Option B: Remote Configuration (For VPS without browser — most common setup)**
+
+This is the most common scenario for VPS setups. You will use your **local machine** to authenticate with Google, then transfer the token to your VPS.
+
+#### Step 1: Install rclone on BOTH machines
+
+**On your VPS** (already done above if you followed Step 1).
+
+**On your local machine (Mac/Windows/Linux):**
+
+- **Mac:** `brew install rclone`
+- **Windows:** Download from https://rclone.org/downloads/ and extract the `.exe`
+- **Linux:** `curl https://rclone.org/install.sh | sudo bash`
+
+#### Step 2: Get the auth token on your LOCAL machine
+
+Open a terminal on your **local machine** and run:
 
 ```bash
-# On your LOCAL machine (with browser):
 rclone authorize "drive"
-
-# This will open a browser and generate a token
-# Copy the entire token output
-
-# On your VPS, run:
-rclone config
-
-# Follow prompts and paste the token when asked
 ```
+
+This will:
+1. Open a browser window automatically
+2. Ask you to sign in to your Google account
+3. Ask you to grant rclone access to Google Drive
+4. After you click **Allow**, return a token in your terminal
+
+You will see something like this in your terminal:
+
+```
+If your browser doesn't open automatically go to the following link:
+http://127.0.0.1:53682/auth?...
+
+Log in and authorize rclone for access
+
+Waiting for code...
+Got code
+
+Paste the following into your remote machine --->
+{"access_token":"ya29.A0...","token_type":"Bearer","refresh_token":"1//0g...","expiry":"2026-02-21T15:32:11.123456789+02:00"}
+<---End paste
+```
+
+**Copy the entire JSON block** — everything between the arrows, including the curly braces `{ }`. Save it somewhere temporarily (e.g. a text file).
+
+> **Tip:** If the browser doesn't open automatically, rclone will print a URL starting with `http://127.0.0.1:53682/auth?...`. Manually copy and paste that URL into any browser on any machine you are signed into Google with. Complete the auth flow there, then return to the terminal — rclone will detect the completion and print the token.
+
+#### Step 3: Configure rclone on your VPS
+
+SSH into your VPS and run:
+
+```bash
+rclone config
+```
+
+You will be walked through a series of prompts. Here is exactly what to enter at each step:
+
+```
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+
+n/s/q> n
+```
+
+```
+name> zoe_library
+```
+
+```
+Type of storage to configure.
+...
+XX / Google Drive
+   \ "drive"
+...
+
+Storage> drive
+```
+
+*(Type `drive` — easier than finding the number, which changes between rclone versions)*
+
+```
+Google Application Client ID - leave blank normally.
+client_id>
+```
+*(Press Enter — leave blank)*
+
+```
+Google Application Client Secret - leave blank normally.
+client_secret>
+```
+*(Press Enter — leave blank)*
+
+```
+Scope that rclone should use when requesting access from drive.
+ 1 / Full access all files...
+   \ "drive"
+ 2 / Read-only access...
+...
+
+scope> 1
+```
+
+```
+ID of the root folder - leave blank to use highest level.
+root_folder_id>
+```
+*(Press Enter — leave blank)*
+
+```
+Service Account Credentials JSON file path - leave blank to use interactive login
+service_account_file>
+```
+*(Press Enter — leave blank)*
+
+```
+Edit advanced config?
+y) Yes
+n) No (default)
+
+y/n> n
+```
+
+```
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+
+y/n> n
+```
+
+**This is the critical step.** Because you said `n`, rclone will now ask you to paste your token:
+
+```
+Please paste token here:
+```
+
+Paste the entire JSON token you copied from your local machine in Step 2:
+
+```
+{"access_token":"ya29.A0...","token_type":"Bearer","refresh_token":"1//0g...","expiry":"2026-02-21T..."}
+```
+
+Press **Enter**.
+
+```
+Configure this as a Shared Drive (Team Drive)?
+y) Yes
+n) No (default)
+
+y/n> n
+```
+
+You will then see a summary:
+
+```
+[zoe_library]
+type = drive
+scope = drive
+token = {"access_token":"ya29...","refresh_token":"1//0g..."}
+--------------------
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+
+y/e/d> y
+```
+
+Type `y` and press Enter. Then type `q` to quit the config wizard.
+
+```
+e/n/d/r/c/s/q> q
+```
+
+#### Step 4: Check where the config is stored (for reference)
+
+```bash
+# View the rclone config file location
+rclone config file
+
+# View its contents (contains your token)
+cat ~/.config/rclone/rclone.conf
+```
+
+You will see your remote saved there. **Keep this file secure** — it contains your Google Drive access token.
+
+---
 
 ### 3. Test Google Drive Connection
 
 ```bash
 # List Google Drive root directory
-rclone lsd gdrive_backup:
+rclone lsd zoe_library:
 
 # Create backup folder on Google Drive
-rclone mkdir gdrive_backup:LibraryApp_Backups
+rclone mkdir zoe_library:zoe_library
 
 # Verify folder was created
-rclone lsd gdrive_backup:
+rclone lsd zoe_library:
 
-# You should see: LibraryApp_Backups folder
+# You should see: zoe_library folder
 ```
 
 ---
@@ -151,7 +326,7 @@ CONTAINER_NAME="postgres_library_app"
 DB_NAME=${ZOELIBRARYAPP_DB_NAME:-}
 DB_USER=${ZOELIBRARYAPP_DB_USER:-}
 BACKUP_DIR="$PROJECT_ROOT/backups"
-RCLONE_REMOTE="gdrive_backup:LibraryApp_Backups"
+RCLONE_REMOTE="zoe_library:zoe_library"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="library_app_backup_${TIMESTAMP}.sql"
 BACKUP_FILE_GZ="${BACKUP_FILE}.gz"
@@ -275,7 +450,7 @@ print_success "Old Google Drive backups cleaned up"
 log_message "Backup completed successfully"
 print_success "Backup process completed!"
 print_info "Backup file: $BACKUP_FILE_GZ"
-print_info "Location: Google Drive -> LibraryApp_Backups"
+print_info "Location: Google Drive -> zoe_library"
 
 # Send summary to log
 echo "==========================================" >> "$LOG_FILE"
@@ -284,7 +459,7 @@ echo "" >> "$LOG_FILE"
 # Upload log file to Google Drive
 print_info "Uploading log file to Google Drive..."
 if rclone copy "$LOG_FILE" "$RCLONE_REMOTE/logs/"; then
-    print_success "Log file uploaded to Google Drive (LibraryApp_Backups/logs/)"
+    print_success "Log file uploaded to Google Drive (zoe_library/logs/)"
 else
     print_error "Failed to upload log file to Google Drive"
 fi
@@ -339,7 +514,7 @@ cd library-app
 ✓ Old local backups cleaned up
 ✓ Backup process completed!
 ℹ Uploading log file to Google Drive...
-✓ Log file uploaded to Google Drive (LibraryApp_Backups/logs/)
+✓ Log file uploaded to Google Drive (zoe_library/logs/)
 ```
 
 ### 2. Verify Backup on Google Drive
@@ -347,20 +522,20 @@ cd library-app
 **Method 1: Via rclone**
 ```bash
 # List backups on Google Drive
-rclone ls gdrive_backup:LibraryApp_Backups
+rclone ls zoe_library:zoe_library
 
 # Check backup details
-rclone lsl gdrive_backup:LibraryApp_Backups
+rclone lsl zoe_library:zoe_library
 
 # Download and verify a backup (optional)
-rclone copy gdrive_backup:LibraryApp_Backups/library_app_backup_20260206_143022.sql.gz /tmp/
+rclone copy zoe_library:zoe_library/library_app_backup_20260206_143022.sql.gz /tmp/
 gunzip /tmp/library_app_backup_20260206_143022.sql.gz
 head -n 20 /tmp/library_app_backup_20260206_143022.sql
 ```
 
 **Method 2: Via Web Browser**
 1. Go to https://drive.google.com
-2. Navigate to `LibraryApp_Backups` folder
+2. Navigate to `zoe_library` folder
 3. Verify backup files are present
 
 ### 3. Check Backup Logs
@@ -386,16 +561,16 @@ The backup script automatically uploads the log file to Google Drive after each 
 
 ```bash
 # List log files on Google Drive
-rclone lsl gdrive_backup:LibraryApp_Backups/logs/
+rclone lsl zoe_library:zoe_library/logs/
 
 # Download the log file from Google Drive to view it
-rclone copy gdrive_backup:LibraryApp_Backups/logs/backup_log.txt /tmp/
+rclone copy zoe_library:zoe_library/logs/backup_log.txt /tmp/
 cat /tmp/backup_log.txt
 ```
 
 You can also view the logs via the Google Drive web interface:
 1. Go to https://drive.google.com
-2. Navigate to `LibraryApp_Backups` -> `logs`
+2. Navigate to `zoe_library` -> `logs`
 3. Open `backup_log.txt` to view the backup history
 
 ---
@@ -521,13 +696,13 @@ tail -n 100 backups/cron_log.txt
 tail -n 100 backups/backup_log.txt
 
 # Count backups on Google Drive
-rclone lsf gdrive_backup:LibraryApp_Backups | wc -l
+rclone lsf zoe_library:zoe_library | wc -l
 
 # List all backups with sizes
-rclone lsl gdrive_backup:LibraryApp_Backups
+rclone lsl zoe_library:zoe_library
 
 # Check last backup time
-rclone lsl gdrive_backup:LibraryApp_Backups | tail -1
+rclone lsl zoe_library:zoe_library | tail -1
 ```
 
 ### 2. Create Monitoring Script
@@ -565,7 +740,7 @@ echo ""
 
 # Check last Google Drive backup
 echo "Last 3 Google Drive backups:"
-rclone lsl gdrive_backup:LibraryApp_Backups | tail -3
+rclone lsl zoe_library:zoe_library | tail -3
 
 echo ""
 
@@ -678,10 +853,18 @@ rclone config
 
 # Delete old remote and create new one
 # d) Delete remote
-# name> gdrive_backup
+# name> zoe_library
 # n) New remote
 # ... (follow setup steps again)
 ```
+
+If the token is rejected or has expired, go back to your **local machine** and re-run:
+
+```bash
+rclone authorize "drive"
+```
+
+Copy the new token and paste it when re-running `rclone config` on the VPS. Tokens generally last a long time due to the `refresh_token` field, but if you manually revoke rclone's access from your Google account settings, you will need to redo the full auth process.
 
 ### Issue: Backup script fails
 
@@ -727,13 +910,13 @@ crontab -e
 
 ```bash
 # Check bandwidth (limit to 1MB/s for testing)
-rclone copy --progress --bwlimit 1M backups/backup_file.sql.gz gdrive_backup:LibraryApp_Backups/
+rclone copy --progress --bwlimit 1M backups/backup_file.sql.gz zoe_library:zoe_library/
 
 # Check Google Drive quota
-rclone about gdrive_backup:
+rclone about zoe_library:
 
 # Test connection speed
-rclone test speed gdrive_backup:
+rclone test speed zoe_library:
 ```
 
 ### Issue: Backup file is empty
@@ -786,19 +969,19 @@ docker exec postgres_library_app pg_dump -U libraryuser -d library_app_db | head
 cd library-app
 
 # List all backups on Google Drive
-rclone lsl gdrive_backup:LibraryApp_Backups
+rclone lsl zoe_library:zoe_library
 
 # Download specific backup
-rclone copy gdrive_backup:LibraryApp_Backups/backup_file.sql.gz ~/downloads/
+rclone copy zoe_library:zoe_library/backup_file.sql.gz ~/downloads/
 
 # Delete specific backup
-rclone delete gdrive_backup:LibraryApp_Backups/backup_file.sql.gz
+rclone delete zoe_library:zoe_library/backup_file.sql.gz
 
 # Check Google Drive space
-rclone about gdrive_backup:
+rclone about zoe_library:
 
 # Sync local to Google Drive (careful - can delete files!)
-rclone sync backups gdrive_backup:LibraryApp_Backups
+rclone sync backups zoe_library:zoe_library
 
 # Run backup manually
 ./scripts/postgresql_backup.sh

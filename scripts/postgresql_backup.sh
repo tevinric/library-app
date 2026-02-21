@@ -5,14 +5,8 @@
 # Backs up PostgreSQL database from Docker container to Google Drive via rclone
 ################################################################################
 
-# Prevent script from being sourced (which would close terminal on exit)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # Script is being executed normally
-    :
-else
-    echo "ERROR: Do not source this script! Run it with: ./postgresql_backup.sh"
-    return 1 2>/dev/null || exit 1
-fi
+# Exit on any error
+set -euo pipefail
 
 # Detect script directory and calculate project root if not already set
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,15 +29,12 @@ fi
 PROJECT_ROOT="${PROJECT_ROOT:-$DETECTED_PROJECT_ROOT}"
 echo "Project root: $PROJECT_ROOT"
 
-# Enable strict error handling after loading environment
-set -o pipefail
-
 # Configuration
 CONTAINER_NAME="postgres_library_app"
-DB_NAME="${ZOELIBRARYAPP_DB_NAME:-}"
-DB_USER="${ZOELIBRARYAPP_DB_USER:-}"
+DB_NAME=${ZOELIBRARYAPP_DB_NAME:-}
+DB_USER=${ZOELIBRARYAPP_DB_USER:-}
 BACKUP_DIR="$PROJECT_ROOT/backups"
-RCLONE_REMOTE="gdrive_backup:LibraryApp_Backups"
+RCLONE_REMOTE="zoe_library:zoe_library"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="library_app_backup_${TIMESTAMP}.sql"
 BACKUP_FILE_GZ="${BACKUP_FILE}.gz"
@@ -167,7 +158,7 @@ print_success "Old Google Drive backups cleaned up"
 log_message "Backup completed successfully"
 print_success "Backup process completed!"
 print_info "Backup file: $BACKUP_FILE_GZ"
-print_info "Location: Google Drive -> LibraryApp_Backups"
+print_info "Location: Google Drive -> zoe_library"
 
 # Send summary to log
 echo "==========================================" >> "$LOG_FILE"
@@ -176,7 +167,7 @@ echo "" >> "$LOG_FILE"
 # Upload log file to Google Drive
 print_info "Uploading log file to Google Drive..."
 if rclone copy "$LOG_FILE" "$RCLONE_REMOTE/logs/"; then
-    print_success "Log file uploaded to Google Drive (LibraryApp_Backups/logs/)"
+    print_success "Log file uploaded to Google Drive (zoe_library/logs/)"
 else
     print_error "Failed to upload log file to Google Drive"
 fi
