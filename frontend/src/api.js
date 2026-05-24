@@ -31,6 +31,11 @@ api.interceptors.response.use(
 // API FUNCTIONS
 // =============================================================================
 
+// Public books (no auth required)
+const publicBaseURL = import.meta.env.PROD ? '' : (import.meta.env.VITE_ZOELIBRARYAPP_API_URL || 'http://localhost:5002')
+export const getPublicBooks = (search = '') =>
+  axios.get(`${publicBaseURL}/api/public/books`, { params: { search } })
+
 // Health check
 export const healthCheck = () => api.get('/api/health')
 

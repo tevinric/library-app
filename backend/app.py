@@ -177,6 +177,48 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 # =============================================================================
+# PUBLIC ENDPOINTS (no authentication required)
+# =============================================================================
+
+@app.route('/api/public/books', methods=['GET'])
+def get_public_books():
+    """Public endpoint: returns safe book fields for visitor browsing only."""
+    try:
+        search = request.args.get('search', '').strip()
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        if search:
+            cur.execute('''
+                SELECT DISTINCT ON (LOWER(b.title), b.author)
+                       b.title, b.author, b.isbn, b.publication_year,
+                       b.publisher, b.cover_medium
+                FROM books b
+                WHERE LOWER(b.title) LIKE LOWER(%s)
+                   OR LOWER(b.author) LIKE LOWER(%s)
+                   OR LOWER(b.isbn) LIKE LOWER(%s)
+                ORDER BY LOWER(b.title), b.author ASC
+            ''', (f'%{search}%', f'%{search}%', f'%{search}%'))
+        else:
+            cur.execute('''
+                SELECT DISTINCT ON (LOWER(b.title), b.author)
+                       b.title, b.author, b.isbn, b.publication_year,
+                       b.publisher, b.cover_medium
+                FROM books b
+                ORDER BY LOWER(b.title), b.author ASC
+            ''')
+
+        books = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        return jsonify(books)
+
+    except Exception as e:
+        logger.error(f"Error fetching public books: {str(e)}")
+        return jsonify({'error': 'Failed to fetch books'}), 500
+
+# =============================================================================
 # USER ENDPOINTS
 # =============================================================================
 

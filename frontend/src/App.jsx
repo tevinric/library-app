@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useMsal, useIsAuthenticated } from '@azure/msal-react'
 import { InteractionStatus } from '@azure/msal-browser'
 import { loginRequest } from './authConfig'
+import BrowseBooks from './pages/BrowseBooks'
 import Dashboard from './pages/Dashboard'
 import BookRegistration from './pages/BookRegistration'
 import BookSearch from './pages/BookSearch'
@@ -132,6 +133,11 @@ function App() {
     { path: '/follow-ups', label: 'Follow Ups', IconComponent: BellIcon },
   ]
 
+  // Public browse page — always accessible without authentication
+  if (location.pathname === '/browse') {
+    return <BrowseBooks />
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -141,50 +147,45 @@ function App() {
     )
   }
 
-  // Not authenticated - show login (PROD mode only)
+  // Not authenticated - show landing page (PROD mode only)
   if (!IS_DEV_MODE && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 flex items-center justify-center p-4">
-        <div className="login-container max-w-md w-full text-center space-y-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 flex flex-col">
+        {/* Top bar — admin login button top-right */}
+        <header className="flex justify-end p-4 sm:p-6">
+          <button
+            onClick={handleLogin}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700/60 text-gray-200 rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium border border-gray-600/50 hover:border-gray-500 text-sm"
+          >
+            <MicrosoftIcon className="w-4 h-4" />
+            <span>Admin Login</span>
+          </button>
+        </header>
+
+        {/* Main content */}
+        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-4">
           {/* Logo and Branding */}
-          <div className="relative z-10 space-y-4">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="icon-circle from-primary-500 to-primary-600 w-20 h-20">
                 <LibraryIcon className="w-10 h-10 text-white" />
               </div>
             </div>
             <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">
-                ZOE Library
-              </h1>
-              <p className="text-gray-400 text-lg font-medium">
-                Management System
-              </p>
+              <h1 className="text-4xl font-bold gradient-text mb-2">ZOE Library</h1>
+              <p className="text-gray-400 text-lg font-medium">Management System</p>
             </div>
           </div>
 
-          {/* Login Form */}
-          <div className="relative z-10 space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-white">Welcome Back</h2>
-              <p className="text-gray-400">
-                Sign in with your Microsoft account to continue
-              </p>
-            </div>
-
-            <button
-              onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-300 font-semibold shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:-translate-y-1 group"
-            >
-              <MicrosoftIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              <span>Sign in with Microsoft</span>
-            </button>
-
-            <p className="text-xs text-gray-500">
-              Secure authentication powered by Microsoft Azure AD
-            </p>
-          </div>
-        </div>
+          {/* Browse Library CTA */}
+          <Link
+            to="/browse"
+            className="flex items-center justify-center gap-3 px-10 py-4 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-300 font-semibold text-lg shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:-translate-y-1"
+          >
+            <BookIcon className="w-6 h-6" />
+            <span>Browse the Library</span>
+          </Link>
+        </main>
       </div>
     )
   }
