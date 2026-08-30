@@ -26,9 +26,9 @@ import {
   StarIcon,
   BellIcon,
   LogoutIcon,
-  LibraryIcon,
   MicrosoftIcon
 } from './components/Icons'
+import zccLogo from './static/ZCC-logo.png'
 import './App.css'
 
 // Check if we're in development mode
@@ -167,13 +167,10 @@ function App() {
           {/* Logo and Branding */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="icon-circle from-primary-500 to-primary-600 w-20 h-20">
-                <LibraryIcon className="w-10 h-10 text-white" />
-              </div>
+              <img src={zccLogo} alt="ZOE Community Church Library" className="w-20 h-20 object-contain" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">ZOE Library</h1>
-              <p className="text-gray-400 text-lg font-medium">Management System</p>
+              <h1 className="text-4xl font-bold gradient-text mb-2">ZOE Community Church Library</h1>
             </div>
           </div>
 
@@ -217,9 +214,7 @@ function App() {
           {/* Logo */}
           <div className="p-6 border-b border-gray-700/50">
             <div className="flex items-center gap-3 mb-3">
-              <div className="icon-circle from-primary-500 to-primary-600 w-10 h-10">
-                <LibraryIcon className="w-5 h-5 text-white" />
-              </div>
+              <img src={zccLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
               <div>
                 <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
                 <p className="text-xs text-gray-500">Management</p>
@@ -272,9 +267,7 @@ function App() {
         <header className="lg:hidden bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50 p-4 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="icon-circle from-primary-500 to-primary-600 w-10 h-10">
-                <LibraryIcon className="w-5 h-5 text-white" />
-              </div>
+              <img src={zccLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
               <div>
                 <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
                 {IS_DEV_MODE && (
