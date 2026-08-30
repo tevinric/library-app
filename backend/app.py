@@ -238,7 +238,7 @@ def get_current_user():
 @app.route('/api/books', methods=['GET'])
 @token_required
 def get_books():
-    """Get all books for the current user."""
+    """Get all books in the library."""
     try:
         search = request.args.get('search', '').strip()
         conn = get_db_connection()
@@ -251,14 +251,13 @@ def get_books():
                        COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) as available_copies
                 FROM books b
                 LEFT JOIN book_copies bc ON b.id = bc.book_id
-                WHERE b.user_id = %s
-                  AND (LOWER(b.title) LIKE LOWER(%s)
+                WHERE (LOWER(b.title) LIKE LOWER(%s)
                        OR LOWER(b.author) LIKE LOWER(%s)
                        OR LOWER(b.isbn) LIKE LOWER(%s)
                        OR LOWER(b.barcode) LIKE LOWER(%s))
                 GROUP BY b.id
                 ORDER BY b.title ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
+            ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT b.*,
@@ -266,10 +265,9 @@ def get_books():
                        COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) as available_copies
                 FROM books b
                 LEFT JOIN book_copies bc ON b.id = bc.book_id
-                WHERE b.user_id = %s
                 GROUP BY b.id
                 ORDER BY b.title ASC
-            ''', (str(g.user_id),))
+            ''')
 
         books = cur.fetchall()
         cur.close()
@@ -295,9 +293,9 @@ def get_book(book_id):
                    COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) as available_copies
             FROM books b
             LEFT JOIN book_copies bc ON b.id = bc.book_id
-            WHERE b.id = %s AND b.user_id = %s
+            WHERE b.id = %s
             GROUP BY b.id
-        ''', (book_id, str(g.user_id)))
+        ''', (book_id,))
 
         book = cur.fetchone()
         cur.close()
@@ -379,7 +377,7 @@ def update_book(book_id):
                 cover_large = %s, subjects = %s, openlibrary_key = %s,
                 openlibrary_url = %s, excerpt = %s, dewey_decimal = %s,
                 lc_classification = %s
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING *
         ''', (
             data.get('title'),
@@ -401,8 +399,7 @@ def update_book(book_id):
             sanitize_input(data.get('excerpt')),
             sanitize_input(data.get('dewey_decimal')),
             sanitize_input(data.get('lc_classification')),
-            book_id,
-            str(g.user_id)
+            book_id
         ))
 
         book = cur.fetchone()
@@ -429,9 +426,9 @@ def delete_book(book_id):
 
         cur.execute('''
             DELETE FROM books
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (book_id, str(g.user_id)))
+        ''', (book_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -472,9 +469,9 @@ def get_book_by_barcode(barcode):
                    ) FILTER (WHERE bc.id IS NOT NULL) as copies
             FROM books b
             LEFT JOIN book_copies bc ON b.id = bc.book_id
-            WHERE (b.barcode = %s OR b.isbn = %s) AND b.user_id = %s
+            WHERE (b.barcode = %s OR b.isbn = %s)
             GROUP BY b.id
-        ''', (barcode, barcode, str(g.user_id)))
+        ''', (barcode, barcode))
 
         book = cur.fetchone()
         cur.close()
@@ -518,9 +515,9 @@ def get_book_copies(book_id):
             JOIN books b ON bc.book_id = b.id
             LEFT JOIN checkouts co ON bc.id = co.copy_id AND co.status = 'Checked Out'
             LEFT JOIN borrowers br ON co.borrower_id = br.id
-            WHERE bc.book_id = %s AND bc.user_id = %s
+            WHERE bc.book_id = %s
             ORDER BY bc.copy_number ASC
-        ''', (book_id, str(g.user_id)))
+        ''', (book_id,))
 
         copies = cur.fetchall()
         cur.close()
@@ -587,15 +584,14 @@ def update_book_copy(copy_id):
         cur.execute('''
             UPDATE book_copies
             SET condition = %s, location = %s, status = %s, notes = %s
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING *
         ''', (
             data.get('condition'),
             data.get('location'),
             data.get('status'),
             data.get('notes'),
-            copy_id,
-            str(g.user_id)
+            copy_id
         ))
 
         copy = cur.fetchone()
@@ -633,9 +629,9 @@ def delete_book_copy(copy_id):
 
         cur.execute('''
             DELETE FROM book_copies
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (copy_id, str(g.user_id)))
+        ''', (copy_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -670,22 +666,20 @@ def get_borrowers():
                        COUNT(DISTINCT CASE WHEN co.status = 'Checked Out' THEN co.id END) as active_checkouts
                 FROM borrowers b
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
-                WHERE b.user_id = %s
-                  AND (LOWER(b.first_name) LIKE LOWER(%s)
+                WHERE (LOWER(b.first_name) LIKE LOWER(%s)
                        OR LOWER(b.borrower_id) LIKE LOWER(%s))
                 GROUP BY b.id
                 ORDER BY b.borrower_id ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%'))
+            ''', (f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT b.*,
                        COUNT(DISTINCT CASE WHEN co.status = 'Checked Out' THEN co.id END) as active_checkouts
                 FROM borrowers b
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
-                WHERE b.user_id = %s
                 GROUP BY b.id
                 ORDER BY b.borrower_id ASC
-            ''', (str(g.user_id),))
+            ''')
 
         borrowers = cur.fetchall()
         cur.close()
@@ -709,11 +703,10 @@ def autocomplete_borrowers():
         cur.execute('''
             SELECT id, first_name, borrower_id
             FROM borrowers
-            WHERE user_id = %s
-              AND (LOWER(first_name) LIKE LOWER(%s) OR LOWER(borrower_id) LIKE LOWER(%s))
+            WHERE (LOWER(first_name) LIKE LOWER(%s) OR LOWER(borrower_id) LIKE LOWER(%s))
             ORDER BY borrower_id ASC
             LIMIT 10
-        ''', (str(g.user_id), f'%{query}%', f'%{query}%'))
+        ''', (f'%{query}%', f'%{query}%'))
 
         borrowers = cur.fetchall()
         cur.close()
@@ -739,9 +732,9 @@ def get_borrower(borrower_id):
                    COUNT(DISTINCT CASE WHEN co.status = 'Returned' THEN co.id END) as total_checkouts
             FROM borrowers b
             LEFT JOIN checkouts co ON b.id = co.borrower_id
-            WHERE b.id = %s AND b.user_id = %s
+            WHERE b.id = %s
             GROUP BY b.id
-        ''', (borrower_id, str(g.user_id)))
+        ''', (borrower_id,))
 
         borrower = cur.fetchone()
         cur.close()
@@ -801,12 +794,11 @@ def update_borrower(borrower_id):
         cur.execute('''
             UPDATE borrowers
             SET first_name = %s
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING *
         ''', (
             data.get('first_name'),
-            borrower_id,
-            str(g.user_id)
+            borrower_id
         ))
 
         borrower = cur.fetchone()
@@ -844,9 +836,9 @@ def delete_borrower(borrower_id):
 
         cur.execute('''
             DELETE FROM borrowers
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (borrower_id, str(g.user_id)))
+        ''', (borrower_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -887,13 +879,13 @@ def get_checkouts():
                 JOIN book_copies bc ON co.copy_id = bc.id
                 JOIN books b ON bc.book_id = b.id
                 JOIN borrowers br ON co.borrower_id = br.id
-                WHERE co.user_id = %s AND co.status = 'Checked Out'
+                WHERE co.status = 'Checked Out'
                   AND (LOWER(b.title) LIKE LOWER(%s)
                        OR LOWER(br.first_name) LIKE LOWER(%s)
                        OR LOWER(br.borrower_id) LIKE LOWER(%s)
                        OR b.barcode LIKE %s)
                 ORDER BY co.checkout_date ASC
-            ''', (str(g.user_id), f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
+            ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT co.*,
@@ -906,9 +898,9 @@ def get_checkouts():
                 JOIN book_copies bc ON co.copy_id = bc.id
                 JOIN books b ON bc.book_id = b.id
                 JOIN borrowers br ON co.borrower_id = br.id
-                WHERE co.user_id = %s AND co.status = 'Checked Out'
+                WHERE co.status = 'Checked Out'
                 ORDER BY co.checkout_date ASC
-            ''', (str(g.user_id),))
+            ''')
 
         checkouts = cur.fetchall()
         cur.close()
@@ -932,8 +924,8 @@ def create_checkout():
         # Verify copy is available
         cur.execute('''
             SELECT status FROM book_copies
-            WHERE id = %s AND user_id = %s
-        ''', (data.get('copy_id'), str(g.user_id)))
+            WHERE id = %s
+        ''', (data.get('copy_id'),))
 
         copy = cur.fetchone()
         if not copy:
@@ -993,8 +985,8 @@ def return_checkout(checkout_id):
         # Get checkout info
         cur.execute('''
             SELECT copy_id FROM checkouts
-            WHERE id = %s AND user_id = %s AND status = 'Checked Out'
-        ''', (checkout_id, str(g.user_id)))
+            WHERE id = %s AND status = 'Checked Out'
+        ''', (checkout_id,))
 
         checkout = cur.fetchone()
         if not checkout:
@@ -1039,9 +1031,9 @@ def delete_checkout(checkout_id):
 
         cur.execute('''
             DELETE FROM checkouts
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (checkout_id, str(g.user_id)))
+        ''', (checkout_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -1083,10 +1075,10 @@ def get_checkout_history():
             JOIN book_copies bc ON co.copy_id = bc.id
             JOIN books b ON bc.book_id = b.id
             JOIN borrowers br ON co.borrower_id = br.id
-            WHERE co.user_id = %s
+            WHERE 1=1
         '''
 
-        params = [str(g.user_id)]
+        params = []
 
         if book_id:
             query += ' AND b.id = %s'
@@ -1131,7 +1123,6 @@ def get_wishlist():
 
         cur.execute('''
             SELECT * FROM book_wishlist
-            WHERE user_id = %s
             ORDER BY
                 CASE priority
                     WHEN 'High' THEN 1
@@ -1139,7 +1130,7 @@ def get_wishlist():
                     WHEN 'Low' THEN 3
                 END,
                 created_at DESC
-        ''', (str(g.user_id),))
+        ''')
 
         wishlist = cur.fetchall()
         cur.close()
@@ -1198,7 +1189,7 @@ def update_wishlist_item(item_id):
             UPDATE book_wishlist
             SET title = %s, author = %s, isbn = %s, requested_by = %s,
                 request_notes = %s, priority = %s, status = %s
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING *
         ''', (
             data.get('title'),
@@ -1208,8 +1199,7 @@ def update_wishlist_item(item_id):
             data.get('request_notes'),
             data.get('priority'),
             data.get('status'),
-            item_id,
-            str(g.user_id)
+            item_id
         ))
 
         item = cur.fetchone()
@@ -1236,9 +1226,9 @@ def delete_wishlist_item(item_id):
 
         cur.execute('''
             DELETE FROM book_wishlist
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (item_id, str(g.user_id)))
+        ''', (item_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -1278,9 +1268,8 @@ def get_follow_ups():
             JOIN book_copies bc ON co.copy_id = bc.id
             JOIN books b ON bc.book_id = b.id
             JOIN borrowers br ON co.borrower_id = br.id
-            WHERE fu.user_id = %s
             ORDER BY co.checkout_date ASC, fu.status ASC
-        ''', (str(g.user_id),))
+        ''')
 
         follow_ups = cur.fetchall()
         cur.close()
@@ -1304,8 +1293,8 @@ def create_follow_up():
         # Check if follow-up already exists
         cur.execute('''
             SELECT id FROM follow_ups
-            WHERE checkout_id = %s AND user_id = %s
-        ''', (data.get('checkout_id'), str(g.user_id)))
+            WHERE checkout_id = %s
+        ''', (data.get('checkout_id'),))
 
         if cur.fetchone():
             cur.close()
@@ -1345,14 +1334,13 @@ def update_follow_up(follow_up_id):
         cur.execute('''
             UPDATE follow_ups
             SET status = %s, contacted_date = %s, resolution_notes = %s
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING *
         ''', (
             data.get('status'),
             data.get('contacted_date'),
             data.get('resolution_notes'),
-            follow_up_id,
-            str(g.user_id)
+            follow_up_id
         ))
 
         follow_up = cur.fetchone()
@@ -1379,9 +1367,9 @@ def delete_follow_up(follow_up_id):
 
         cur.execute('''
             DELETE FROM follow_ups
-            WHERE id = %s AND user_id = %s
+            WHERE id = %s
             RETURNING id
-        ''', (follow_up_id, str(g.user_id)))
+        ''', (follow_up_id,))
 
         deleted = cur.fetchone()
         conn.commit()
@@ -1410,56 +1398,50 @@ def get_dashboard_stats():
         cur = conn.cursor()
 
         # Total books
-        cur.execute('''
-            SELECT COUNT(*) as total FROM books WHERE user_id = %s
-        ''', (str(g.user_id),))
+        cur.execute('SELECT COUNT(*) as total FROM books')
         total_books = cur.fetchone()['total']
 
         # Total copies
-        cur.execute('''
-            SELECT COUNT(*) as total FROM book_copies WHERE user_id = %s
-        ''', (str(g.user_id),))
+        cur.execute('SELECT COUNT(*) as total FROM book_copies')
         total_copies = cur.fetchone()['total']
 
         # Available copies
         cur.execute('''
             SELECT COUNT(*) as total FROM book_copies
-            WHERE user_id = %s AND status = 'Available'
-        ''', (str(g.user_id),))
+            WHERE status = 'Available'
+        ''')
         available_copies = cur.fetchone()['total']
 
         # Active checkouts
         cur.execute('''
             SELECT COUNT(*) as total FROM checkouts
-            WHERE user_id = %s AND status = 'Checked Out'
-        ''', (str(g.user_id),))
+            WHERE status = 'Checked Out'
+        ''')
         active_checkouts = cur.fetchone()['total']
 
         # Total borrowers
-        cur.execute('''
-            SELECT COUNT(*) as total FROM borrowers WHERE user_id = %s
-        ''', (str(g.user_id),))
+        cur.execute('SELECT COUNT(*) as total FROM borrowers')
         total_borrowers = cur.fetchone()['total']
 
         # Overdue checkouts
         cur.execute('''
             SELECT COUNT(*) as total FROM checkouts
-            WHERE user_id = %s AND status = 'Checked Out' AND due_date < CURRENT_DATE
-        ''', (str(g.user_id),))
+            WHERE status = 'Checked Out' AND due_date < CURRENT_DATE
+        ''')
         overdue_checkouts = cur.fetchone()['total']
 
         # Wishlist items
         cur.execute('''
             SELECT COUNT(*) as total FROM book_wishlist
-            WHERE user_id = %s AND status = 'Requested'
-        ''', (str(g.user_id),))
+            WHERE status = 'Requested'
+        ''')
         wishlist_items = cur.fetchone()['total']
 
         # Pending follow-ups
         cur.execute('''
             SELECT COUNT(*) as total FROM follow_ups
-            WHERE user_id = %s AND status IN ('Pending', 'Contacted')
-        ''', (str(g.user_id),))
+            WHERE status IN ('Pending', 'Contacted')
+        ''')
         pending_follow_ups = cur.fetchone()['total']
 
         cur.close()
