@@ -51,7 +51,7 @@ function Settings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -61,20 +61,20 @@ function Settings() {
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <div className="icon-circle from-primary-500 to-primary-600 w-12 h-12">
-          <SettingsIcon className="w-6 h-6 text-white" />
+          <SettingsIcon className="w-6 h-6 text-ink" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
+          <h1 className="text-3xl font-bold text-ink">Settings</h1>
           <p className="text-gray-400 mt-1">Library-wide configuration</p>
         </div>
       </div>
 
       <div className="card max-w-xl">
-        <h2 className="text-xl font-semibold text-white mb-4">Late Fees & Lending</h2>
+        <h2 className="text-xl font-semibold text-ink mb-4">Late Fees & Lending</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Late Fee per Day (Rands)
             </label>
             <input
@@ -95,7 +95,7 @@ function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Default Lending Period (days)
             </label>
             <input
@@ -114,7 +114,7 @@ function Settings() {
 
           {message && (
             <div className={message.type === 'success' ? 'alert-success' : 'alert-danger'}>
-              <p className={message.type === 'success' ? 'text-success-200' : 'text-danger-200'}>
+              <p className={message.type === 'success' ? 'text-success-800' : 'text-danger-800'}>
                 {message.text}
               </p>
             </div>

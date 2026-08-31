@@ -166,3 +166,15 @@ export const ReceiptIcon = ({ className = "w-5 h-5" }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l2 2 4-4m3 9l-3-2-3 2-3-2-3 2V5a2 2 0 012-2h8a2 2 0 012 2v14z" />
   </svg>
 )
+
+export const FilterIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M6 8h12M9 12h6M11 16h2" />
+  </svg>
+)
+
+export const ChevronDownIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+)

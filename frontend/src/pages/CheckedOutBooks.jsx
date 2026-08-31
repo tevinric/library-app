@@ -82,7 +82,7 @@ function CheckedOutBooks() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Borrowed Books</h1>
+        <h1 className="text-3xl font-bold text-ink">Borrowed Books</h1>
         <p className="text-gray-400 mt-1">View all currently borrowed books (oldest first)</p>
       </div>
 
@@ -98,7 +98,7 @@ function CheckedOutBooks() {
           />
           {loading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary-500"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary-600"></div>
             </div>
           )}
         </div>
@@ -111,7 +111,7 @@ function CheckedOutBooks() {
         </div>
       ) : (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {checkouts.length} book{checkouts.length !== 1 ? 's' : ''} checked out
           </h2>
           <div className="space-y-4">
@@ -124,8 +124,8 @@ function CheckedOutBooks() {
                   key={checkout.id}
                   className={`rounded-lg p-4 ${
                     overdue
-                      ? 'bg-danger-900/30 border border-danger-500'
-                      : 'bg-gray-700'
+                      ? 'bg-danger-50 border border-danger-300'
+                      : 'bg-gray-50'
                   }`}
                 >
                   <div className="flex gap-4">
@@ -135,7 +135,7 @@ function CheckedOutBooks() {
                         <img
                           src={checkout.cover_large || checkout.cover_medium}
                           alt={checkout.title}
-                          className="w-16 h-auto rounded-lg shadow-lg border border-gray-600 object-cover"
+                          className="w-16 h-auto rounded-lg shadow-lg border border-gray-300 object-cover"
                           onError={(e) => e.target.style.display = 'none'}
                         />
                       </div>
@@ -147,7 +147,7 @@ function CheckedOutBooks() {
 
                         {/* Book info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-white truncate">{checkout.title}</h3>
+                          <h3 className="text-lg font-semibold text-ink truncate">{checkout.title}</h3>
                           <p className="text-gray-400 text-sm">by {checkout.author}</p>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                             <span className="text-sm text-gray-500">Copy #{checkout.copy_number}</span>
@@ -156,7 +156,7 @@ function CheckedOutBooks() {
                             )}
                           </div>
                           {checkout.location && (
-                            <p className="text-sm text-primary-400 mt-1">
+                            <p className="text-sm text-primary-600 mt-1">
                               📍 {checkout.location}
                             </p>
                           )}
@@ -165,7 +165,7 @@ function CheckedOutBooks() {
                         {/* Borrower */}
                         <div className="flex-1">
                           <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Borrowed By</p>
-                          <p className="text-white font-medium">{checkout.first_name}</p>
+                          <p className="text-ink font-medium">{checkout.first_name}</p>
                           <p className="text-gray-400 text-sm font-mono">ID: {checkout.borrower_id}</p>
                         </div>
 
@@ -176,12 +176,12 @@ function CheckedOutBooks() {
                               {formatDistanceToNow(new Date(checkout.checkout_date), { addSuffix: true })}
                             </p>
                             <p className={`text-sm font-medium mt-1 ${
-                              overdue ? 'text-danger-400' : 'text-success-400'
+                              overdue ? 'text-danger-600' : 'text-success-600'
                             }`}>
                               Due: {new Date(checkout.due_date).toLocaleDateString()}
                             </p>
                             {overdue && (
-                              <span className="inline-block mt-1 px-2 py-0.5 bg-danger-900/50 text-danger-300 text-xs rounded font-semibold">
+                              <span className="inline-block mt-1 px-2 py-0.5 bg-danger-50 text-danger-700 text-xs rounded font-semibold">
                                 OVERDUE · {daysOverdue(checkout.due_date)} day{daysOverdue(checkout.due_date) !== 1 ? 's' : ''}
                               </span>
                             )}
@@ -193,8 +193,8 @@ function CheckedOutBooks() {
                             disabled={alreadyFlagged}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                               alreadyFlagged
-                                ? 'bg-warning-900/40 text-warning-300 border border-warning-500/50 cursor-default'
-                                : 'bg-gray-600 hover:bg-gray-500 text-gray-200 border border-gray-500 hover:border-gray-400'
+                                ? 'bg-warning-50 text-warning-700 border border-warning-300 cursor-default'
+                                : 'bg-gray-100 hover:bg-gray-300 text-gray-700 border border-gray-400 hover:border-gray-400'
                             }`}
                           >
                             <FlagIcon className="w-3.5 h-3.5" />
@@ -204,7 +204,7 @@ function CheckedOutBooks() {
                       </div>
 
                       {checkout.notes && (
-                        <div className="mt-3 pt-3 border-t border-gray-600">
+                        <div className="mt-3 pt-3 border-t border-gray-300">
                           <p className="text-sm text-gray-400">Notes: {checkout.notes}</p>
                         </div>
                       )}
@@ -222,17 +222,17 @@ function CheckedOutBooks() {
         <div className="modal-overlay" onClick={() => setShowFollowUpModal(false)}>
           <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-warning-900/50 border border-warning-500/50 flex items-center justify-center flex-shrink-0">
-                <FlagIcon className="w-5 h-5 text-warning-400" />
+              <div className="w-10 h-10 rounded-full bg-warning-50 border border-warning-300 flex items-center justify-center flex-shrink-0">
+                <FlagIcon className="w-5 h-5 text-warning-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Flag for Follow-up</h2>
+                <h2 className="text-xl font-bold text-ink">Flag for Follow-up</h2>
                 <p className="text-gray-400 text-sm">This will appear on the Follow Ups page</p>
               </div>
             </div>
 
             {/* Book summary */}
-            <div className="bg-gray-700/60 rounded-lg p-4 mb-5 flex gap-3">
+            <div className="bg-gray-50 rounded-lg p-4 mb-5 flex gap-3">
               {(followUpTarget.cover_large || followUpTarget.cover_medium) && (
                 <img
                   src={followUpTarget.cover_large || followUpTarget.cover_medium}
@@ -242,17 +242,17 @@ function CheckedOutBooks() {
                 />
               )}
               <div>
-                <p className="text-white font-semibold">{followUpTarget.title}</p>
+                <p className="text-ink font-semibold">{followUpTarget.title}</p>
                 <p className="text-gray-400 text-sm">Copy #{followUpTarget.copy_number}</p>
                 <p className="text-gray-400 text-sm">
-                  Borrowed by <span className="text-white">{followUpTarget.first_name}</span>
-                  <span className="text-primary-400 font-mono ml-1">({followUpTarget.borrower_id})</span>
+                  Borrowed by <span className="text-ink">{followUpTarget.first_name}</span>
+                  <span className="text-primary-600 font-mono ml-1">({followUpTarget.borrower_id})</span>
                 </p>
               </div>
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
                 Reason <span className="text-gray-500 font-normal">(optional)</span>
               </label>
               <textarea
@@ -275,7 +275,7 @@ function CheckedOutBooks() {
               <button
                 onClick={submitFollowUp}
                 disabled={followUpLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-warning-600 to-warning-500 text-white rounded-lg hover:from-warning-700 hover:to-warning-600 transition-all duration-200 font-semibold shadow-lg"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-warning-600 to-warning-500 text-ink rounded-lg hover:from-warning-700 hover:to-warning-600 transition-all duration-200 font-semibold shadow-lg"
               >
                 <FlagIcon className="w-4 h-4" />
                 {followUpLoading ? 'Flagging...' : 'Flag for Follow-up'}

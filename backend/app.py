@@ -267,31 +267,44 @@ def health_check():
 
 @app.route('/api/public/books', methods=['GET'])
 def get_public_books():
-    """Public endpoint: returns safe book fields for visitor browsing only."""
+    """Public endpoint: returns safe book fields + copy availability for visitor browsing.
+    Still exposes no user IDs, barcodes, or checkout/borrower data."""
     try:
         search = request.args.get('search', '').strip()
+        genre = request.args.get('genre', '').strip()
+        available_only = request.args.get('available_only', '').lower() == 'true'
+
         conn = get_db_connection()
         cur = conn.cursor()
 
+        where_clauses = []
+        params = []
+
         if search:
-            cur.execute('''
-                SELECT DISTINCT ON (LOWER(b.title), b.author)
-                       b.title, b.author, b.isbn, b.publication_year,
-                       b.publisher, b.cover_medium
-                FROM books b
-                WHERE LOWER(b.title) LIKE LOWER(%s)
+            where_clauses.append('''(LOWER(b.title) LIKE LOWER(%s)
                    OR LOWER(b.author) LIKE LOWER(%s)
-                   OR LOWER(b.isbn) LIKE LOWER(%s)
-                ORDER BY LOWER(b.title), b.author ASC
-            ''', (f'%{search}%', f'%{search}%', f'%{search}%'))
-        else:
-            cur.execute('''
-                SELECT DISTINCT ON (LOWER(b.title), b.author)
-                       b.title, b.author, b.isbn, b.publication_year,
-                       b.publisher, b.cover_medium
-                FROM books b
-                ORDER BY LOWER(b.title), b.author ASC
-            ''')
+                   OR LOWER(b.isbn) LIKE LOWER(%s))''')
+            params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
+
+        if genre:
+            where_clauses.append('b.genre = %s')
+            params.append(genre)
+
+        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ''
+        having_sql = "HAVING COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) > 0" if available_only else ''
+
+        cur.execute(f'''
+            SELECT b.id, b.title, b.author, b.isbn, b.publication_year,
+                   b.publisher, b.genre, b.cover_medium,
+                   COUNT(DISTINCT bc.id) as total_copies,
+                   COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) as available_copies
+            FROM books b
+            LEFT JOIN book_copies bc ON b.id = bc.book_id
+            {where_sql}
+            GROUP BY b.id
+            {having_sql}
+            ORDER BY LOWER(b.title) ASC
+        ''', params)
 
         books = cur.fetchall()
         cur.close()
@@ -302,6 +315,57 @@ def get_public_books():
     except Exception as e:
         logger.error(f"Error fetching public books: {str(e)}")
         return jsonify({'error': 'Failed to fetch books'}), 500
+
+@app.route('/api/public/books/<book_id>', methods=['GET'])
+def get_public_book_detail(book_id):
+    """Public endpoint: single book's safe detail fields for the browse page's detail view."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            SELECT b.id, b.title, b.author, b.isbn, b.publisher, b.publication_year,
+                   b.genre, b.description, b.language, b.pages, b.subjects,
+                   b.cover_medium, b.cover_large,
+                   COUNT(DISTINCT bc.id) as total_copies,
+                   COUNT(DISTINCT CASE WHEN bc.status = 'Available' THEN bc.id END) as available_copies
+            FROM books b
+            LEFT JOIN book_copies bc ON b.id = bc.book_id
+            WHERE b.id = %s
+            GROUP BY b.id
+        ''', (book_id,))
+
+        book = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+
+        return jsonify(book)
+
+    except Exception as e:
+        logger.error(f"Error fetching public book detail: {str(e)}")
+        return jsonify({'error': 'Failed to fetch book'}), 500
+
+@app.route('/api/public/genres', methods=['GET'])
+def get_public_genres():
+    """Public endpoint: distinct genres in the collection, for the browse page filter."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT DISTINCT genre FROM books
+            WHERE genre IS NOT NULL AND genre <> ''
+            ORDER BY genre ASC
+        ''')
+        genres = [row['genre'] for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return jsonify(genres)
+    except Exception as e:
+        logger.error(f"Error fetching public genres: {str(e)}")
+        return jsonify({'error': 'Failed to fetch genres'}), 500
 
 # =============================================================================
 # USER ENDPOINTS

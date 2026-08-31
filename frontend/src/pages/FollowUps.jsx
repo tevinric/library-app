@@ -84,18 +84,18 @@ function FollowUps() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending':   return 'bg-indigo-900/50 text-indigo-300 border border-indigo-500/40'
-      case 'Contacted': return 'bg-primary-900/50 text-primary-300 border border-primary-500/40'
-      case 'Resolved':  return 'bg-success-900/50 text-success-300 border border-success-500/40'
-      case 'Escalated': return 'bg-danger-900/50 text-danger-300 border border-danger-500/40'
-      default:          return 'bg-gray-600 text-gray-300'
+      case 'Pending':   return 'bg-primary-50 text-primary-700 border border-primary-200'
+      case 'Contacted': return 'bg-primary-50 text-primary-700 border border-primary-300'
+      case 'Resolved':  return 'bg-success-50 text-success-700 border border-success-300'
+      case 'Escalated': return 'bg-danger-50 text-danger-700 border border-danger-200'
+      default:          return 'bg-gray-100 text-gray-600'
     }
   }
 
   if (loading && followUps.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -104,16 +104,16 @@ function FollowUps() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Follow Ups</h1>
+        <h1 className="text-3xl font-bold text-ink">Follow Ups</h1>
         <p className="text-gray-400 mt-1">Books requiring follow-up (oldest first)</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-700">
+      <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setTab('active')}
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-            tab === 'active' ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+            tab === 'active' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-400 hover:text-ink'
           }`}
         >
           Active
@@ -121,7 +121,7 @@ function FollowUps() {
         <button
           onClick={() => setTab('history')}
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-            tab === 'history' ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+            tab === 'history' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-400 hover:text-ink'
           }`}
         >
           History
@@ -135,31 +135,31 @@ function FollowUps() {
         </div>
       ) : (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {followUps.length} follow-up{followUps.length !== 1 ? 's' : ''}
           </h2>
           <div className="space-y-4">
             {followUps.map((followUp) => (
-              <div key={followUp.id} className="bg-gray-700 rounded-lg p-4">
+              <div key={followUp.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{followUp.title}</h3>
+                    <h3 className="text-lg font-semibold text-ink">{followUp.title}</h3>
                     <p className="text-gray-400">by {followUp.author}</p>
                     <p className="text-sm text-gray-500 mt-1">Copy #{followUp.copy_number}</p>
                   </div>
 
                   <div className="flex-1">
                     <p className="text-sm text-gray-400">Borrowed By</p>
-                    <p className="text-white font-medium">{followUp.first_name}</p>
+                    <p className="text-ink font-medium">{followUp.first_name}</p>
                     <p className="text-gray-400 text-sm">ID: {followUp.borrower_id}</p>
                   </div>
 
                   <div className="flex-1 text-right">
                     <p className="text-sm text-gray-400">Borrowed</p>
-                    <p className="text-white">
+                    <p className="text-ink">
                       {formatDistanceToNow(new Date(followUp.checkout_date), { addSuffix: true })}
                     </p>
-                    <p className="text-danger-400 font-medium mt-1">
+                    <p className="text-danger-600 font-medium mt-1">
                       {Math.floor(followUp.days_checked_out)} days ago
                     </p>
                     <p className="text-sm text-gray-400 mt-2">
@@ -172,7 +172,7 @@ function FollowUps() {
                 </div>
 
                 {followUp.reason && (
-                  <div className="mt-3 pt-3 border-t border-gray-600">
+                  <div className="mt-3 pt-3 border-t border-gray-300">
                     <p className="text-sm text-gray-400">
                       <strong>Reason:</strong> {followUp.reason}
                     </p>
@@ -220,16 +220,16 @@ function FollowUps() {
       {showModal && selectedFollowUp && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">Update Follow-up</h2>
+            <h2 className="text-2xl font-bold text-ink mb-4">Update Follow-up</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <p className="text-white font-medium mb-4">
+                <p className="text-ink font-medium mb-4">
                   {selectedFollowUp.title} - {selectedFollowUp.first_name} ({selectedFollowUp.borrower_id})
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Status</label>
                 <select
                   value={updateData.status}
                   onChange={(e) => setUpdateData({...updateData, status: e.target.value})}
@@ -243,7 +243,7 @@ function FollowUps() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Contacted Date</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Contacted Date</label>
                 <input
                   type="date"
                   value={updateData.contacted_date}
@@ -253,7 +253,7 @@ function FollowUps() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Resolution Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Resolution Notes</label>
                 <textarea
                   value={updateData.resolution_notes}
                   onChange={(e) => setUpdateData({...updateData, resolution_notes: e.target.value})}
@@ -281,21 +281,21 @@ function FollowUps() {
         <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-content max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-danger-900/50 border border-danger-500/50 flex items-center justify-center flex-shrink-0">
-                <TrashIcon className="w-5 h-5 text-danger-400" />
+              <div className="w-10 h-10 rounded-full bg-danger-50 border border-danger-300 flex items-center justify-center flex-shrink-0">
+                <TrashIcon className="w-5 h-5 text-danger-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Delete Follow-up</h2>
+                <h2 className="text-xl font-bold text-ink">Delete Follow-up</h2>
                 <p className="text-gray-400 text-sm">This action cannot be undone</p>
               </div>
             </div>
 
-            <div className="bg-gray-700/60 rounded-lg p-4 mb-6">
-              <p className="text-white font-semibold">{deleteTarget.title}</p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <p className="text-ink font-semibold">{deleteTarget.title}</p>
               <p className="text-gray-400 text-sm">Copy #{deleteTarget.copy_number}</p>
               <p className="text-gray-400 text-sm mt-1">
-                Borrowed by <span className="text-white">{deleteTarget.first_name}</span>
-                <span className="text-primary-400 font-mono ml-1">({deleteTarget.borrower_id})</span>
+                Borrowed by <span className="text-ink">{deleteTarget.first_name}</span>
+                <span className="text-primary-600 font-mono ml-1">({deleteTarget.borrower_id})</span>
               </p>
             </div>
 

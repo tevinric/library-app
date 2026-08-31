@@ -108,27 +108,27 @@ function Wishlist() {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'High': return 'bg-danger-900/50 text-danger-300'
-      case 'Medium': return 'bg-warning-900/50 text-warning-300'
-      case 'Low': return 'bg-gray-600 text-gray-300'
-      default: return 'bg-gray-600 text-gray-300'
+      case 'High': return 'bg-danger-50 text-danger-700'
+      case 'Medium': return 'bg-warning-50 text-warning-700'
+      case 'Low': return 'bg-gray-100 text-gray-600'
+      default: return 'bg-gray-100 text-gray-600'
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Requested': return 'bg-primary-900/50 text-primary-300'
-      case 'Ordered': return 'bg-warning-900/50 text-warning-300'
-      case 'Received': return 'bg-success-900/50 text-success-300'
-      case 'Cancelled': return 'bg-gray-600 text-gray-300'
-      default: return 'bg-gray-600 text-gray-300'
+      case 'Requested': return 'bg-primary-50 text-primary-700'
+      case 'Ordered': return 'bg-warning-50 text-warning-700'
+      case 'Received': return 'bg-success-50 text-success-700'
+      case 'Cancelled': return 'bg-gray-100 text-gray-600'
+      default: return 'bg-gray-100 text-gray-600'
     }
   }
 
   if (loading && wishlist.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -138,7 +138,7 @@ function Wishlist() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white">Book Wishlist</h1>
+          <h1 className="text-3xl font-bold text-ink">Book Wishlist</h1>
           <p className="text-gray-400 mt-1">Requested books not in library</p>
         </div>
         <button onClick={handleNewItem} className="btn-primary flex items-center gap-2 self-start sm:self-auto">
@@ -154,15 +154,15 @@ function Wishlist() {
         </div>
       ) : (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {wishlist.length} item{wishlist.length !== 1 ? 's' : ''} in wishlist
           </h2>
           <div className="space-y-4">
             {wishlist.map((item) => (
-              <div key={item.id} className="bg-gray-700 rounded-lg p-4">
+              <div key={item.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                    <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
                     {item.author && <p className="text-gray-400">by {item.author}</p>}
                     {item.isbn && <p className="text-sm text-gray-500">ISBN: {item.isbn}</p>}
                     {item.requested_by && (
@@ -210,12 +210,12 @@ function Wishlist() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">
+            <h2 className="text-2xl font-bold text-ink mb-4">
               {editingItem ? 'Edit Wishlist Item' : 'Add to Wishlist'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Title *</label>
                 <input
                   type="text"
                   value={formData.title}
@@ -226,7 +226,7 @@ function Wishlist() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Author</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Author</label>
                   <input
                     type="text"
                     value={formData.author}
@@ -235,7 +235,7 @@ function Wishlist() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">ISBN</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">ISBN</label>
                   <input
                     type="text"
                     value={formData.isbn}
@@ -245,7 +245,7 @@ function Wishlist() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Requested By</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Requested By</label>
                 <input
                   type="text"
                   value={formData.requested_by}
@@ -255,7 +255,7 @@ function Wishlist() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({...formData, priority: e.target.value})}
@@ -267,7 +267,7 @@ function Wishlist() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
@@ -281,7 +281,7 @@ function Wishlist() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Notes</label>
                 <textarea
                   value={formData.request_notes}
                   onChange={(e) => setFormData({...formData, request_notes: e.target.value})}
