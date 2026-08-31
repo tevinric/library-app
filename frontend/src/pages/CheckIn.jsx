@@ -121,8 +121,8 @@ function CheckIn() {
   const confirmReturn = async () => {
     try {
       setLoading(true)
-      await returnCheckout(selectedCopy.checkout_info.id)
-      setReturnResult({ book: confirmedBook, copy: selectedCopy })
+      const response = await returnCheckout(selectedCopy.checkout_info.id)
+      setReturnResult({ book: confirmedBook, copy: selectedCopy, fine: response.data?.fine || null })
       setShowConfirmModal(false)
       setShowSuccessModal(true)
     } catch (error) {
@@ -476,6 +476,16 @@ function CheckIn() {
                 <p className="text-white font-semibold">{returnResult.copy.checkout_info?.borrower_name}</p>
                 <p className="text-primary-400 font-mono text-sm">ID: {returnResult.copy.checkout_info?.borrower_id}</p>
               </div>
+
+              {returnResult.fine && (
+                <div className="border-t border-gray-600 pt-4">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Late Fee</p>
+                  <p className="text-warning-400 font-bold text-lg">
+                    This book was {returnResult.fine.days_overdue} day{returnResult.fine.days_overdue !== 1 ? 's' : ''} overdue —
+                    {' '}a fine of R {Number(returnResult.fine.amount).toFixed(2)} has been recorded.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 import { useMsal, useIsAuthenticated } from '@azure/msal-react'
 import { InteractionStatus } from '@azure/msal-browser'
 import { loginRequest } from './authConfig'
@@ -14,6 +14,8 @@ import CheckoutHistory from './pages/CheckoutHistory'
 import Users from './pages/Users'
 import Wishlist from './pages/Wishlist'
 import FollowUps from './pages/FollowUps'
+import OverdueBooks from './pages/OverdueBooks'
+import Settings from './pages/Settings'
 import {
   DashboardIcon,
   BookIcon,
@@ -26,7 +28,9 @@ import {
   StarIcon,
   BellIcon,
   LogoutIcon,
-  MicrosoftIcon
+  MicrosoftIcon,
+  AlertIcon,
+  SettingsIcon
 } from './components/Icons'
 import zccLogo from './static/ZCC-logo.png'
 import './App.css'
@@ -131,6 +135,8 @@ function App() {
     { path: '/users', label: 'Users', IconComponent: UsersIcon },
     { path: '/wishlist', label: 'Wishlist', IconComponent: StarIcon },
     { path: '/follow-ups', label: 'Follow Ups', IconComponent: BellIcon },
+    { path: '/overdue-books', label: 'Overdue & Fines', IconComponent: AlertIcon },
+    { path: '/settings', label: 'Settings', IconComponent: SettingsIcon },
   ]
 
   // Public browse page — always accessible without authentication
@@ -305,6 +311,10 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/follow-ups" element={<FollowUps />} />
+            <Route path="/overdue-books" element={<OverdueBooks />} />
+            {/* Fines were folded into Overdue Books — keep old links working */}
+            <Route path="/fines" element={<Navigate to="/overdue-books" replace />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>

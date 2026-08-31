@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getBooks, getBookCopies, autocompleteBorrowers, createBorrower, createCheckout, getBookByBarcode, deleteBook } from '../api'
+import { getBooks, getBookCopies, autocompleteBorrowers, createBorrower, createCheckout, getBookByBarcode, deleteBook, getSettings } from '../api'
 import BarcodeScanner from '../components/BarcodeScanner'
 import { TrashIcon, AlertIcon, PlusIcon } from '../components/Icons'
 
@@ -17,6 +17,7 @@ function CheckoutBooks() {
   const [showNewBorrowerForm, setShowNewBorrowerForm] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [defaultLendingDays, setDefaultLendingDays] = useState(14)
   const [checkoutData, setCheckoutData] = useState({
     due_days: 14,
     notes: ''
@@ -36,6 +37,16 @@ function CheckoutBooks() {
       setBorrowerSuggestions([])
     }
   }, [borrowerSearch])
+
+  useEffect(() => {
+    getSettings()
+      .then((response) => {
+        const days = response.data.default_lending_days
+        setDefaultLendingDays(days)
+        setCheckoutData((prev) => ({ ...prev, due_days: days }))
+      })
+      .catch((error) => console.error('Error loading settings:', error))
+  }, [])
 
   const searchBooks = async () => {
     try {
@@ -256,7 +267,7 @@ function CheckoutBooks() {
     setBorrowerSearch('')
     setSelectedBorrower(null)
     setShowBarcodeScanner(true)
-    setCheckoutData({ due_days: 14, notes: '' })
+    setCheckoutData({ due_days: defaultLendingDays, notes: '' })
   }
 
   return (

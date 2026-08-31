@@ -1,15 +1,19 @@
 from flask import Flask, request, jsonify, g
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from functools import wraps
 import psycopg2
+import psycopg2.errors
 from psycopg2.extras import RealDictCursor
 import os
 from dotenv import load_dotenv
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal
 import random
 import string
 import re
+import time
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +24,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('ZOELIBRARYAPP_SECRET_KEY', 'dev-secret-key')
+
+# Flask's default JSON provider can't serialize Decimal (returned by psycopg2
+# for NUMERIC columns like fines.amount) — teach it to encode as float.
+class DecimalSafeJSONProvider(DefaultJSONProvider):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return float(o)
+        return super().default(o)
+
+app.json = DecimalSafeJSONProvider(app)
 
 # CORS Configuration
 CORS(app, resources={
@@ -47,6 +61,45 @@ def get_db_connection():
         password=os.getenv('ZOELIBRARYAPP_DB_PASSWORD'),
         cursor_factory=RealDictCursor
     )
+
+# =============================================================================
+# STARTUP MIGRATIONS
+# =============================================================================
+# sql_init.sql only runs on a brand-new, empty Postgres volume. This runs the
+# same (idempotent) schema additions against an already-populated database on
+# every backend startup, so new features ship without manual DB intervention
+# or any risk to existing data. Safe to run repeatedly — every statement is
+# CREATE TABLE IF NOT EXISTS / ON CONFLICT DO NOTHING.
+MIGRATION_LOCK_ID = 918273645
+
+def run_migrations():
+    migration_path = os.path.join(os.path.dirname(__file__), 'migrations.sql')
+    with open(migration_path, 'r') as f:
+        migration_sql = f.read()
+
+    max_attempts = 10
+    for attempt in range(1, max_attempts + 1):
+        try:
+            conn = get_db_connection()
+            conn.autocommit = False
+            cur = conn.cursor()
+            # Advisory lock serializes migrations across gunicorn worker
+            # processes, which each import this module independently on boot.
+            cur.execute('SELECT pg_advisory_lock(%s)', (MIGRATION_LOCK_ID,))
+            cur.execute(migration_sql)
+            conn.commit()
+            cur.execute('SELECT pg_advisory_unlock(%s)', (MIGRATION_LOCK_ID,))
+            cur.close()
+            conn.close()
+            logger.info("Database migrations applied successfully")
+            return
+        except Exception as e:
+            logger.warning(f"Migration attempt {attempt}/{max_attempts} failed: {str(e)}")
+            time.sleep(2)
+
+    raise RuntimeError("Could not apply database migrations after retries")
+
+run_migrations()
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -112,6 +165,38 @@ def generate_borrower_id(first_name, conn):
             return borrower_id
 
     raise Exception(f'Unable to generate unique borrower_id after {max_attempts} attempts for name: {first_name}')
+
+def get_settings_dict(cur):
+    """Fetch all settings as a {key: value} dict (raw string values)."""
+    cur.execute('SELECT key, value FROM settings')
+    return {row['key']: row['value'] for row in cur.fetchall()}
+
+def get_late_fee_rate(cur):
+    """Current late fee rate (Rands/day) as a Decimal."""
+    cur.execute("SELECT value FROM settings WHERE key = 'late_fee_per_day'")
+    row = cur.fetchone()
+    return Decimal(row['value']) if row else Decimal('0.00')
+
+def sync_overdue_fines(cur, user_id):
+    """
+    Create/refresh a fines row for every checkout that is currently overdue
+    and still checked out. Recalculates days_overdue/amount using the current
+    late fee rate on every call (lazy, on-read recalculation — no background
+    job). Never touches a fine that has already been marked Paid.
+    """
+    rate = get_late_fee_rate(cur)
+    cur.execute('''
+        INSERT INTO fines (checkout_id, user_id, days_overdue, rate_applied, amount, status)
+        SELECT co.id, %s, (CURRENT_DATE - co.due_date),
+               %s, (CURRENT_DATE - co.due_date) * %s, 'Unpaid'
+        FROM checkouts co
+        WHERE co.status = 'Checked Out' AND co.due_date < CURRENT_DATE
+        ON CONFLICT (checkout_id) DO UPDATE
+          SET days_overdue = EXCLUDED.days_overdue,
+              rate_applied = EXCLUDED.rate_applied,
+              amount = EXCLUDED.amount
+          WHERE fines.status = 'Unpaid'
+    ''', (str(user_id), rate, rate))
 
 # =============================================================================
 # AUTHENTICATION DECORATORS
@@ -440,6 +525,11 @@ def delete_book(book_id):
 
         return jsonify({'message': 'Book deleted successfully'})
 
+    except psycopg2.errors.ForeignKeyViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Cannot delete — this book has fine history that must be preserved for audit purposes.'}), 400
     except Exception as e:
         logger.error(f"Error deleting book: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -643,6 +733,11 @@ def delete_book_copy(copy_id):
 
         return jsonify({'message': 'Book copy deleted successfully'})
 
+    except psycopg2.errors.ForeignKeyViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Cannot delete — this copy has fine history that must be preserved for audit purposes.'}), 400
     except Exception as e:
         logger.error(f"Error deleting book copy: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -850,6 +945,11 @@ def delete_borrower(borrower_id):
 
         return jsonify({'message': 'Borrower deleted successfully'})
 
+    except psycopg2.errors.ForeignKeyViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Cannot delete — this borrower has fine history that must be preserved for audit purposes.'}), 400
     except Exception as e:
         logger.error(f"Error deleting borrower: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -984,7 +1084,7 @@ def return_checkout(checkout_id):
 
         # Get checkout info
         cur.execute('''
-            SELECT copy_id FROM checkouts
+            SELECT copy_id, due_date FROM checkouts
             WHERE id = %s AND status = 'Checked Out'
         ''', (checkout_id,))
 
@@ -1011,11 +1111,51 @@ def return_checkout(checkout_id):
             WHERE id = %s
         ''', (checkout['copy_id'],))
 
+        # If returned late, finalize the fine for this checkout (frozen from
+        # here on, since sync_overdue_fines only ever touches 'Checked Out'
+        # checkouts). Guarded so an already-Paid fine is never overwritten.
+        finalized_fine = None
+        due_date = checkout.get('due_date')
+        if due_date:
+            days_overdue = (updated['return_date'].date() - due_date).days
+            if days_overdue > 0:
+                rate = get_late_fee_rate(cur)
+                amount = Decimal(days_overdue) * rate
+                cur.execute('''
+                    INSERT INTO fines (checkout_id, user_id, days_overdue, rate_applied, amount, status)
+                    VALUES (%s, %s, %s, %s, %s, 'Unpaid')
+                    ON CONFLICT (checkout_id) DO UPDATE
+                      SET days_overdue = EXCLUDED.days_overdue,
+                          rate_applied = EXCLUDED.rate_applied,
+                          amount = EXCLUDED.amount
+                      WHERE fines.status = 'Unpaid'
+                    RETURNING *
+                ''', (checkout_id, str(g.user_id), days_overdue, rate, amount))
+                finalized_fine = cur.fetchone()
+                if not finalized_fine:
+                    # Conflict existed but fine was already Paid — report its
+                    # current (unchanged) state instead of silently dropping it.
+                    cur.execute('SELECT * FROM fines WHERE checkout_id = %s', (checkout_id,))
+                    finalized_fine = cur.fetchone()
+
+        # Auto-resolve any linked follow-up still in progress, preserving it
+        # as history rather than deleting it (full audit trail requirement).
+        cur.execute('''
+            UPDATE follow_ups
+            SET status = 'Resolved',
+                resolution_notes = COALESCE(resolution_notes || ' ', '') || '[Auto-resolved: book returned]'
+            WHERE checkout_id = %s AND status IN ('Pending', 'Contacted', 'Escalated')
+        ''', (checkout_id,))
+
         conn.commit()
         cur.close()
         conn.close()
 
-        return jsonify(updated)
+        result = dict(updated)
+        if finalized_fine:
+            result['fine'] = finalized_fine
+
+        return jsonify(result)
 
     except Exception as e:
         logger.error(f"Error returning checkout: {str(e)}")
@@ -1045,6 +1185,11 @@ def delete_checkout(checkout_id):
 
         return jsonify({'message': 'Checkout deleted successfully'})
 
+    except psycopg2.errors.ForeignKeyViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Cannot delete — this checkout has fine history that must be preserved for audit purposes.'}), 400
     except Exception as e:
         logger.error(f"Error deleting checkout: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -1251,12 +1396,19 @@ def delete_wishlist_item(item_id):
 @app.route('/api/follow-ups', methods=['GET'])
 @token_required
 def get_follow_ups():
-    """Get all follow-ups ordered by checkout date (oldest first)."""
+    """Get follow-ups ordered by checkout date (oldest first).
+
+    ?view=active (default) - status not yet Resolved
+    ?view=history           - status = Resolved
+    """
     try:
+        view = request.args.get('view', 'active')
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('''
+        status_clause = "fu.status = 'Resolved'" if view == 'history' else "fu.status != 'Resolved'"
+
+        cur.execute(f'''
             SELECT fu.*,
                    co.checkout_date, co.due_date,
                    b.title, b.author,
@@ -1268,6 +1420,7 @@ def get_follow_ups():
             JOIN book_copies bc ON co.copy_id = bc.id
             JOIN books b ON bc.book_id = b.id
             JOIN borrowers br ON co.borrower_id = br.id
+            WHERE {status_clause}
             ORDER BY co.checkout_date ASC, fu.status ASC
         ''')
 
@@ -1383,6 +1536,323 @@ def delete_follow_up(follow_up_id):
 
     except Exception as e:
         logger.error(f"Error deleting follow-up: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# SETTINGS ENDPOINTS
+# =============================================================================
+
+@app.route('/api/settings', methods=['GET'])
+@token_required
+def get_settings():
+    """Get all app settings (late fee rate, default lending period, etc.)."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        raw = get_settings_dict(cur)
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            'late_fee_per_day': float(raw.get('late_fee_per_day', '0.00')),
+            'default_lending_days': int(raw.get('default_lending_days', '14'))
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching settings: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['PUT'])
+@token_required
+def update_settings():
+    """Update one or more app settings. Body may include late_fee_per_day and/or default_lending_days."""
+    try:
+        data = request.json or {}
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        if 'late_fee_per_day' in data:
+            rate = sanitize_input(data.get('late_fee_per_day'), 'decimal')
+            if rate is None or rate < 0:
+                cur.close()
+                conn.close()
+                return jsonify({'error': 'late_fee_per_day must be a number >= 0'}), 400
+            cur.execute('''
+                INSERT INTO settings (key, value, updated_by)
+                VALUES ('late_fee_per_day', %s, %s)
+                ON CONFLICT (key) DO UPDATE
+                  SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = CURRENT_TIMESTAMP
+            ''', (str(rate), str(g.user_id)))
+
+        if 'default_lending_days' in data:
+            days = sanitize_input(data.get('default_lending_days'), 'int')
+            if days is None or days < 1:
+                cur.close()
+                conn.close()
+                return jsonify({'error': 'default_lending_days must be an integer >= 1'}), 400
+            cur.execute('''
+                INSERT INTO settings (key, value, updated_by)
+                VALUES ('default_lending_days', %s, %s)
+                ON CONFLICT (key) DO UPDATE
+                  SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = CURRENT_TIMESTAMP
+            ''', (str(days), str(g.user_id)))
+
+        conn.commit()
+
+        raw = get_settings_dict(cur)
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            'late_fee_per_day': float(raw.get('late_fee_per_day', '0.00')),
+            'default_lending_days': int(raw.get('default_lending_days', '14'))
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating settings: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# OVERDUE BOOKS ENDPOINTS
+# =============================================================================
+
+def _group_fines_by_borrower(rows):
+    """Group flat fine/book rows (each already carrying borrower_id, first_name,
+    borrower_code) into a list of per-borrower objects with a nested 'books' list."""
+    groups = {}
+    order = []
+    for row in rows:
+        bid = row['borrower_id']
+        if bid not in groups:
+            groups[bid] = {
+                'borrower_id': bid,
+                'first_name': row['first_name'],
+                'borrower_code': row['borrower_code'],
+                'books': []
+            }
+            order.append(bid)
+        groups[bid]['books'].append(row)
+    return [groups[bid] for bid in order]
+
+@app.route('/api/overdue/active', methods=['GET'])
+@token_required
+def get_overdue_active():
+    """Borrowers with currently overdue (still checked-out) books, ranked
+    longest-overdue-first. Carries the same fine/payment columns as
+    /api/fines so payment actions (mark paid / undo) work directly from this
+    view — this endpoint is the single home for overdue + fine management."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        sync_overdue_fines(cur, g.user_id)
+        conn.commit()
+
+        cur.execute('''
+            SELECT br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+                   f.id as fine_id, co.id as checkout_id,
+                   co.checkout_date, co.due_date,
+                   f.days_overdue, f.rate_applied, f.amount,
+                   f.status, f.paid_at, pu.email as paid_by_email,
+                   b.title, b.author, b.cover_medium, b.cover_large,
+                   bc.copy_number,
+                   fu.id as follow_up_id, fu.status as follow_up_status
+            FROM fines f
+            JOIN checkouts co ON f.checkout_id = co.id
+            JOIN book_copies bc ON co.copy_id = bc.id
+            JOIN books b ON bc.book_id = b.id
+            JOIN borrowers br ON co.borrower_id = br.id
+            LEFT JOIN follow_ups fu ON fu.checkout_id = co.id
+            LEFT JOIN users pu ON f.paid_by = pu.id
+            WHERE co.status = 'Checked Out'
+            ORDER BY f.days_overdue DESC, co.due_date ASC
+        ''')
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        groups = _group_fines_by_borrower(rows)
+        for grp in groups:
+            grp['book_count'] = len(grp['books'])
+            grp['max_days_overdue'] = max(bk['days_overdue'] for bk in grp['books'])
+            grp['total_outstanding'] = sum(bk['amount'] for bk in grp['books'] if bk['status'] == 'Unpaid')
+            grp['total_paid'] = sum(bk['amount'] for bk in grp['books'] if bk['status'] == 'Paid')
+
+        groups.sort(key=lambda grp: grp['max_days_overdue'], reverse=True)
+
+        return jsonify(groups)
+
+    except Exception as e:
+        logger.error(f"Error fetching overdue books: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# FINES ENDPOINTS
+# =============================================================================
+
+@app.route('/api/fines', methods=['GET'])
+@token_required
+def get_fines():
+    """All fines (books still out and already returned), grouped by borrower."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        sync_overdue_fines(cur, g.user_id)
+        conn.commit()
+
+        cur.execute('''
+            SELECT br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+                   f.id as fine_id, co.id as checkout_id,
+                   co.checkout_date, co.due_date, co.return_date,
+                   co.status as checkout_status,
+                   f.days_overdue, f.rate_applied, f.amount, f.status,
+                   f.paid_at, pu.email as paid_by_email,
+                   b.title, b.author, b.cover_medium, b.cover_large,
+                   bc.copy_number
+            FROM fines f
+            JOIN checkouts co ON f.checkout_id = co.id
+            JOIN book_copies bc ON co.copy_id = bc.id
+            JOIN books b ON bc.book_id = b.id
+            JOIN borrowers br ON co.borrower_id = br.id
+            LEFT JOIN users pu ON f.paid_by = pu.id
+            ORDER BY br.first_name ASC, f.created_at ASC
+        ''')
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        groups = _group_fines_by_borrower(rows)
+        for grp in groups:
+            grp['total_outstanding'] = sum(bk['amount'] for bk in grp['books'] if bk['status'] == 'Unpaid')
+            grp['total_paid'] = sum(bk['amount'] for bk in grp['books'] if bk['status'] == 'Paid')
+
+        groups.sort(key=lambda grp: grp['total_outstanding'], reverse=True)
+
+        return jsonify(groups)
+
+    except Exception as e:
+        logger.error(f"Error fetching fines: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/fines/settle', methods=['POST'])
+@token_required
+def settle_fines():
+    """Mark one or more currently-Unpaid fines as Paid (full settlement per book)."""
+    try:
+        data = request.json or {}
+        fine_ids = data.get('fine_ids') or []
+        if not fine_ids:
+            return jsonify({'error': 'fine_ids is required'}), 400
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            UPDATE fines
+            SET status = 'Paid', paid_at = CURRENT_TIMESTAMP, paid_by = %s
+            WHERE id = ANY(%s::uuid[]) AND status = 'Unpaid'
+            RETURNING id, amount
+        ''', (str(g.user_id), fine_ids))
+
+        settled = cur.fetchall()
+
+        for fine in settled:
+            cur.execute('''
+                INSERT INTO fine_payments (fine_id, user_id, action, amount)
+                VALUES (%s, %s, 'Paid', %s)
+            ''', (fine['id'], str(g.user_id), fine['amount']))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'settled': [str(f['id']) for f in settled]})
+
+    except Exception as e:
+        logger.error(f"Error settling fines: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/fines/<fine_id>/unpay', methods=['PUT'])
+@token_required
+def unpay_fine(fine_id):
+    """Revert a Paid fine back to Unpaid, logging the reversal for audit."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            UPDATE fines
+            SET status = 'Unpaid', paid_at = NULL, paid_by = NULL
+            WHERE id = %s AND status = 'Paid'
+            RETURNING id, amount
+        ''', (fine_id,))
+
+        fine = cur.fetchone()
+        if not fine:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Fine not found or not currently paid'}), 400
+
+        cur.execute('''
+            INSERT INTO fine_payments (fine_id, user_id, action, amount)
+            VALUES (%s, %s, 'Reversed', %s)
+        ''', (fine['id'], str(g.user_id), fine['amount']))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Payment reversed', 'fine_id': str(fine['id'])})
+
+    except Exception as e:
+        logger.error(f"Error reversing fine payment: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/fines/transactions', methods=['GET'])
+@token_required
+def get_fine_transactions():
+    """Append-only audit ledger of every fine payment/reversal action, newest
+    first — who processed it and when. A row is reversible only when it's the
+    most recent action on its fine AND that fine is currently Paid, which
+    mirrors the guard in unpay_fine (so the button here never 400s)."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            SELECT fp.id as payment_id, fp.fine_id, fp.action, fp.amount, fp.occurred_at,
+                   u.email as processed_by_email,
+                   f.status as fine_status, co.id as checkout_id, co.status as checkout_status,
+                   b.title, b.author, bc.copy_number,
+                   br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+                   ROW_NUMBER() OVER (PARTITION BY fp.fine_id ORDER BY fp.occurred_at DESC, fp.id DESC) as rn
+            FROM fine_payments fp
+            JOIN fines f ON fp.fine_id = f.id
+            JOIN checkouts co ON f.checkout_id = co.id
+            JOIN book_copies bc ON co.copy_id = bc.id
+            JOIN books b ON bc.book_id = b.id
+            JOIN borrowers br ON co.borrower_id = br.id
+            LEFT JOIN users u ON fp.user_id = u.id
+            ORDER BY fp.occurred_at DESC, fp.id DESC
+        ''')
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        transactions = []
+        for row in rows:
+            row['reversible'] = row['action'] == 'Paid' and row['fine_status'] == 'Paid' and row['rn'] == 1
+            del row['rn']
+            transactions.append(row)
+
+        return jsonify(transactions)
+
+    except Exception as e:
+        logger.error(f"Error fetching fine transactions: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # =============================================================================

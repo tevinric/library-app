@@ -80,13 +80,26 @@ export const updateWishlistItem = (id, data) => api.put(`/api/wishlist/${id}`, d
 export const deleteWishlistItem = (id) => api.delete(`/api/wishlist/${id}`)
 
 // Follow-ups
-export const getFollowUps = () => api.get('/api/follow-ups')
+export const getFollowUps = (view = 'active') => api.get('/api/follow-ups', { params: { view } })
 export const createFollowUp = (data) => api.post('/api/follow-ups', data)
 export const updateFollowUp = (id, data) => api.put(`/api/follow-ups/${id}`, data)
 export const deleteFollowUp = (id) => api.delete(`/api/follow-ups/${id}`)
 
 // Dashboard Stats
 export const getDashboardStats = () => api.get('/api/dashboard/stats')
+
+// Settings
+export const getSettings = () => api.get('/api/settings')
+export const updateSettings = (data) => api.put('/api/settings', data)
+
+// Overdue Books + Fines (unified — see OverdueBooks.jsx)
+export const getOverdueActive = () => api.get('/api/overdue/active')
+
+// Fines
+export const getFines = () => api.get('/api/fines')
+export const settleFines = (fineIds) => api.post('/api/fines/settle', { fine_ids: fineIds })
+export const unpayFine = (id) => api.put(`/api/fines/${id}/unpay`)
+export const getFineTransactions = () => api.get('/api/fines/transactions')
 
 // =============================================================================
 // OPENLIBRARY API INTEGRATION

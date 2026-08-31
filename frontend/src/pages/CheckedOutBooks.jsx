@@ -47,6 +47,7 @@ function CheckedOutBooks() {
   }
 
   const isOverdue = (dueDate) => new Date(dueDate) < new Date()
+  const daysOverdue = (dueDate) => Math.max(0, Math.floor((new Date() - new Date(dueDate)) / 86400000))
 
   const openFollowUpModal = (checkout) => {
     setFollowUpTarget(checkout)
@@ -181,7 +182,7 @@ function CheckedOutBooks() {
                             </p>
                             {overdue && (
                               <span className="inline-block mt-1 px-2 py-0.5 bg-danger-900/50 text-danger-300 text-xs rounded font-semibold">
-                                OVERDUE
+                                OVERDUE · {daysOverdue(checkout.due_date)} day{daysOverdue(checkout.due_date) !== 1 ? 's' : ''}
                               </span>
                             )}
                           </div>

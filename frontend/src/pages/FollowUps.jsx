@@ -6,6 +6,7 @@ import { TrashIcon } from '../components/Icons'
 function FollowUps() {
   const [followUps, setFollowUps] = useState([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('active')
 
   // Update modal
   const [showModal, setShowModal] = useState(false)
@@ -23,12 +24,12 @@ function FollowUps() {
 
   useEffect(() => {
     loadFollowUps()
-  }, [])
+  }, [tab])
 
   const loadFollowUps = async () => {
     try {
       setLoading(true)
-      const response = await getFollowUps()
+      const response = await getFollowUps(tab)
       setFollowUps(response.data)
     } catch (error) {
       console.error('Error loading follow-ups:', error)
@@ -105,6 +106,26 @@ function FollowUps() {
       <div>
         <h1 className="text-3xl font-bold text-white">Follow Ups</h1>
         <p className="text-gray-400 mt-1">Books requiring follow-up (oldest first)</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gray-700">
+        <button
+          onClick={() => setTab('active')}
+          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+            tab === 'active' ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          Active
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+            tab === 'history' ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          History
+        </button>
       </div>
 
       {/* Follow-ups List */}

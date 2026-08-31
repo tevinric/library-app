@@ -213,3 +213,65 @@ CREATE INDEX IF NOT EXISTS idx_follow_ups_status ON follow_ups(status);
 -- INDEXES
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- =============================================================================
+-- LATE FEES / SETTINGS / FINES
+-- =============================================================================
+-- Added: 2026-08-30 - Late fee configuration, overdue fine tracking, and
+-- payment auditing. This block is identical to backend/migrations.sql, which
+-- re-runs it (idempotently) on every backend startup so existing deployments
+-- pick it up without needing this init script to run again. Keep both in sync.
+-- =============================================================================
+
+-- SETTINGS TABLE (global key/value config — not user-scoped)
+CREATE TABLE IF NOT EXISTS settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT NOT NULL,
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+INSERT INTO settings (key, value, description) VALUES
+    ('late_fee_per_day', '0.00', 'Late fee charged per day a book is overdue (Rands)'),
+    ('default_lending_days', '14', 'Default number of days a book may be borrowed before it is due')
+ON CONFLICT (key) DO NOTHING;
+
+-- FINES TABLE (one row per overdue checkout; upserted while checked out,
+-- frozen once the checkout is Returned)
+CREATE TABLE IF NOT EXISTS fines (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    -- ON DELETE RESTRICT is deliberate: prevents deleting a book/copy/borrower/
+    -- checkout that has fine history, preserving the audit trail.
+    checkout_id UUID NOT NULL UNIQUE REFERENCES checkouts(id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    days_overdue INT NOT NULL CHECK (days_overdue > 0),
+    rate_applied NUMERIC(10,2) NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'Unpaid' CHECK (status IN ('Unpaid', 'Paid')),
+    paid_at TIMESTAMP,
+    paid_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fines_status ON fines(status);
+CREATE INDEX IF NOT EXISTS idx_fines_checkout_id ON fines(checkout_id);
+
+DROP TRIGGER IF EXISTS update_fines_updated_at ON fines;
+CREATE TRIGGER update_fines_updated_at
+    BEFORE UPDATE ON fines
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- FINE PAYMENTS TABLE (append-only audit ledger of every settle/reverse action)
+CREATE TABLE IF NOT EXISTS fine_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fine_id UUID NOT NULL REFERENCES fines(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    action VARCHAR(20) NOT NULL CHECK (action IN ('Paid', 'Reversed')),
+    amount NUMERIC(10,2) NOT NULL,
+    occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fine_payments_fine_id ON fine_payments(fine_id);
