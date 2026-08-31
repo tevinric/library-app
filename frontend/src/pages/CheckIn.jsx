@@ -148,14 +148,14 @@ function CheckIn() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Return</h1>
+        <h1 className="text-3xl font-bold text-ink">Return</h1>
         <p className="text-gray-400 mt-1">Return borrowed books to inventory</p>
       </div>
 
       {/* Barcode Scanner */}
       {showBarcodeScanner && (
         <div className="card">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-600 mb-2">
             Quick Return: Scan Barcode
           </label>
           <BarcodeScanner
@@ -172,7 +172,7 @@ function CheckIn() {
 
       {/* Manual Search */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           Or search manually
         </label>
         <div className="flex gap-2">
@@ -194,10 +194,10 @@ function CheckIn() {
       {bookResults.length > 0 && (
         <div className="card">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-ink">
               {bookResults.length} result{bookResults.length !== 1 ? 's' : ''} — select a book to return
             </h2>
-            <button onClick={() => setBookResults([])} className="text-gray-400 hover:text-white text-sm">
+            <button onClick={() => setBookResults([])} className="text-gray-400 hover:text-ink text-sm">
               Clear
             </button>
           </div>
@@ -205,7 +205,7 @@ function CheckIn() {
             {bookResults.map((book) => {
               const checkedOutCount = book.total_copies - book.available_copies
               return (
-                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center gap-4">
+                <div key={book.id} className="bg-gray-50 rounded-lg p-4 flex justify-between items-center gap-4">
                   <div className="flex gap-4 flex-1 min-w-0">
                     {(book.cover_large || book.cover_medium) && (
                       <img
@@ -216,13 +216,13 @@ function CheckIn() {
                       />
                     )}
                     <div className="min-w-0">
-                      <h3 className="text-white font-semibold truncate">{book.title}</h3>
+                      <h3 className="text-ink font-semibold truncate">{book.title}</h3>
                       <p className="text-gray-400 text-sm">by {book.author}</p>
                       <p className="text-sm mt-1">
-                        <span className="text-success-400">{book.available_copies} available</span>
+                        <span className="text-success-600">{book.available_copies} available</span>
                         <span className="text-gray-500"> / {book.total_copies} total</span>
                         {checkedOutCount > 0 && (
-                          <span className="text-warning-400 ml-2">{checkedOutCount} checked out</span>
+                          <span className="text-warning-600 ml-2">{checkedOutCount} checked out</span>
                         )}
                       </p>
                     </div>
@@ -247,7 +247,7 @@ function CheckIn() {
       {showBookModal && confirmedBook && (
         <div className="modal-overlay" onClick={cancelBookModal}>
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-6">Confirm Book to Return</h2>
+            <h2 className="text-2xl font-bold text-ink mb-6">Confirm Book to Return</h2>
 
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
               {(confirmedBook.cover_large || confirmedBook.cover_medium) && (
@@ -255,26 +255,26 @@ function CheckIn() {
                   <img
                     src={confirmedBook.cover_large || confirmedBook.cover_medium}
                     alt={confirmedBook.title}
-                    className="w-28 sm:w-36 h-auto rounded-lg shadow-xl border-2 border-primary-500"
+                    className="w-28 sm:w-36 h-auto rounded-lg shadow-xl border-2 border-primary-600"
                     onError={(e) => e.target.style.display = 'none'}
                   />
                 </div>
               )}
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-1">{confirmedBook.title}</h3>
-                <p className="text-lg text-gray-300 mb-4">by {confirmedBook.author}</p>
+                <h3 className="text-2xl font-bold text-ink mb-1">{confirmedBook.title}</h3>
+                <p className="text-lg text-gray-600 mb-4">by {confirmedBook.author}</p>
                 <div className="space-y-2 text-sm">
                   {confirmedBook.isbn && (
-                    <p><span className="text-gray-500">ISBN:</span> <span className="text-gray-300">{confirmedBook.isbn}</span></p>
+                    <p><span className="text-gray-500">ISBN:</span> <span className="text-gray-600">{confirmedBook.isbn}</span></p>
                   )}
                   {confirmedBook.barcode && (
-                    <p><span className="text-gray-500">Barcode:</span> <span className="text-gray-300">{confirmedBook.barcode}</span></p>
+                    <p><span className="text-gray-500">Barcode:</span> <span className="text-gray-600">{confirmedBook.barcode}</span></p>
                   )}
                   {confirmedBook.publication_year && (
-                    <p><span className="text-gray-500">Year:</span> <span className="text-gray-300">{confirmedBook.publication_year}</span></p>
+                    <p><span className="text-gray-500">Year:</span> <span className="text-gray-600">{confirmedBook.publication_year}</span></p>
                   )}
                   {confirmedBook.publisher && (
-                    <p><span className="text-gray-500">Publisher:</span> <span className="text-gray-300">{confirmedBook.publisher}</span></p>
+                    <p><span className="text-gray-500">Publisher:</span> <span className="text-gray-600">{confirmedBook.publisher}</span></p>
                   )}
                 </div>
               </div>
@@ -298,15 +298,15 @@ function CheckIn() {
       {showCopyModal && (
         <div className="modal-overlay">
           <div className="modal-content max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-1">Select Copy to Return</h2>
+            <h2 className="text-2xl font-bold text-ink mb-1">Select Copy to Return</h2>
             <p className="text-gray-400 mb-6">
-              <span className="font-medium text-gray-300">"{confirmedBook?.title}"</span> — select the copy being returned
+              <span className="font-medium text-gray-600">"{confirmedBook?.title}"</span> — select the copy being returned
             </p>
 
             {bookCopies.length === 0 ? (
-              <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-6 mb-6 text-center">
-                <p className="text-blue-200 text-lg font-medium mb-2">No Checked-Out Copies Found</p>
-                <p className="text-blue-300 text-sm">All copies of this book are currently available. Nothing to return.</p>
+              <div className="bg-primary-50 border border-primary-300 rounded-lg p-6 mb-6 text-center">
+                <p className="text-primary-800 text-lg font-medium mb-2">No Checked-Out Copies Found</p>
+                <p className="text-primary-700 text-sm">All copies of this book are currently available. Nothing to return.</p>
               </div>
             ) : (
               <div className="space-y-4 mb-6">
@@ -320,30 +320,30 @@ function CheckIn() {
                     : '—'
 
                   return (
-                    <div key={copy.id} className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600/80 transition-colors">
+                    <div key={copy.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-200 transition-colors">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                           {/* Copy # */}
                           <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Copy</p>
-                            <p className="text-white font-bold text-xl">#{copy.copy_number}</p>
+                            <p className="text-ink font-bold text-xl">#{copy.copy_number}</p>
                             {copy.condition && <p className="text-gray-400 text-xs mt-0.5">{copy.condition}</p>}
                             {copy.location && (
-                              <p className="text-primary-400 text-xs mt-1 font-medium">📍 {copy.location}</p>
+                              <p className="text-primary-600 text-xs mt-1 font-medium">📍 {copy.location}</p>
                             )}
                           </div>
 
                           {/* Borrower */}
                           <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Borrower</p>
-                            <p className="text-white font-semibold">{copy.checkout_info?.borrower_name || '—'}</p>
-                            <p className="text-primary-400 font-mono text-sm">{copy.checkout_info?.borrower_id || '—'}</p>
+                            <p className="text-ink font-semibold">{copy.checkout_info?.borrower_name || '—'}</p>
+                            <p className="text-primary-600 font-mono text-sm">{copy.checkout_info?.borrower_id || '—'}</p>
                           </div>
 
                           {/* Dates */}
                           <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Borrow Date</p>
-                            <p className="text-gray-300">{borrowDate}</p>
+                            <p className="text-gray-600">{borrowDate}</p>
                             <p className="text-xs text-gray-500 mt-1">Due: {dueDate}</p>
                           </div>
 
@@ -352,9 +352,9 @@ function CheckIn() {
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Days</p>
                             {dueStatus ? (
                               <p className={`font-semibold ${
-                                dueStatus.status === 'overdue' ? 'text-red-400' :
-                                dueStatus.status === 'due-today' ? 'text-warning-400' :
-                                'text-success-400'
+                                dueStatus.status === 'overdue' ? 'text-danger-600' :
+                                dueStatus.status === 'due-today' ? 'text-warning-600' :
+                                'text-success-600'
                               }`}>
                                 {dueStatus.text}
                                 {dueStatus.status === 'overdue' && ' ⚠️'}
@@ -388,41 +388,41 @@ function CheckIn() {
       {showConfirmModal && selectedCopy && confirmedBook && (
         <div className="modal-overlay">
           <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-6">Confirm Return</h2>
+            <h2 className="text-2xl font-bold text-ink mb-6">Confirm Return</h2>
 
-            <div className="bg-gray-700 rounded-lg p-6 space-y-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-6 space-y-4 mb-6">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Book</p>
-                <p className="text-lg font-bold text-white">{confirmedBook.title}</p>
-                <p className="text-gray-300 text-sm">by {confirmedBook.author}</p>
+                <p className="text-lg font-bold text-ink">{confirmedBook.title}</p>
+                <p className="text-gray-600 text-sm">by {confirmedBook.author}</p>
               </div>
 
-              <div className="border-t border-gray-600 pt-4">
+              <div className="border-t border-gray-300 pt-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Copy</p>
-                <p className="text-white font-semibold">Copy #{selectedCopy.copy_number}</p>
+                <p className="text-ink font-semibold">Copy #{selectedCopy.copy_number}</p>
                 {selectedCopy.condition && (
                   <p className="text-gray-400 text-sm">Condition: {selectedCopy.condition}</p>
                 )}
                 {selectedCopy.location && (
-                  <p className="text-primary-400 text-sm font-medium mt-1">📍 Return to: {selectedCopy.location}</p>
+                  <p className="text-primary-600 text-sm font-medium mt-1">📍 Return to: {selectedCopy.location}</p>
                 )}
               </div>
 
-              <div className="border-t border-gray-600 pt-4">
+              <div className="border-t border-gray-300 pt-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Borrower</p>
-                <p className="text-lg font-bold text-white">{selectedCopy.checkout_info?.borrower_name}</p>
-                <p className="text-primary-400 font-mono">ID: {selectedCopy.checkout_info?.borrower_id}</p>
+                <p className="text-lg font-bold text-ink">{selectedCopy.checkout_info?.borrower_name}</p>
+                <p className="text-primary-600 font-mono">ID: {selectedCopy.checkout_info?.borrower_id}</p>
               </div>
 
               {selectedCopy.checkout_info?.due_date && (() => {
                 const dueStatus = getDueStatus(selectedCopy.checkout_info.due_date)
                 return (
-                  <div className="border-t border-gray-600 pt-4">
+                  <div className="border-t border-gray-300 pt-4">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Return Status</p>
                     <p className={`font-bold text-lg ${
-                      dueStatus.status === 'overdue' ? 'text-red-400' :
-                      dueStatus.status === 'due-today' ? 'text-warning-400' :
-                      'text-success-400'
+                      dueStatus.status === 'overdue' ? 'text-danger-600' :
+                      dueStatus.status === 'due-today' ? 'text-warning-600' :
+                      'text-success-600'
                     }`}>
                       {dueStatus.text} {dueStatus.status === 'overdue' && '⚠️'}
                     </p>
@@ -451,36 +451,36 @@ function CheckIn() {
           <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Book Returned!</h2>
+              <h2 className="text-2xl font-bold text-ink mb-2">Book Returned!</h2>
               <p className="text-gray-400">The book has been successfully checked in.</p>
             </div>
 
-            <div className="bg-gray-700 rounded-lg p-6 space-y-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-6 space-y-4 mb-6">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Book</p>
-                <p className="text-white font-semibold">{returnResult.book.title}</p>
+                <p className="text-ink font-semibold">{returnResult.book.title}</p>
                 <p className="text-gray-400 text-sm">Copy #{returnResult.copy.copy_number}</p>
               </div>
               {returnResult.copy.location && (
-                <div className="border-t border-gray-600 pt-4">
+                <div className="border-t border-gray-300 pt-4">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Reshelve At</p>
-                  <p className="text-primary-400 font-semibold text-lg">📍 {returnResult.copy.location}</p>
+                  <p className="text-primary-600 font-semibold text-lg">📍 {returnResult.copy.location}</p>
                 </div>
               )}
-              <div className="border-t border-gray-600 pt-4">
+              <div className="border-t border-gray-300 pt-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Returned By</p>
-                <p className="text-white font-semibold">{returnResult.copy.checkout_info?.borrower_name}</p>
-                <p className="text-primary-400 font-mono text-sm">ID: {returnResult.copy.checkout_info?.borrower_id}</p>
+                <p className="text-ink font-semibold">{returnResult.copy.checkout_info?.borrower_name}</p>
+                <p className="text-primary-600 font-mono text-sm">ID: {returnResult.copy.checkout_info?.borrower_id}</p>
               </div>
 
               {returnResult.fine && (
-                <div className="border-t border-gray-600 pt-4">
+                <div className="border-t border-gray-300 pt-4">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Late Fee</p>
-                  <p className="text-warning-400 font-bold text-lg">
+                  <p className="text-warning-600 font-bold text-lg">
                     This book was {returnResult.fine.days_overdue} day{returnResult.fine.days_overdue !== 1 ? 's' : ''} overdue —
                     {' '}a fine of R {Number(returnResult.fine.amount).toFixed(2)} has been recorded.
                   </p>

@@ -16,22 +16,22 @@ function BorrowerRow({ grp, accent, metricLabel, metricValue, metricClassName, s
   return (
     <div
       onClick={onClick}
-      className="bg-gray-700/60 hover:bg-gray-700 rounded-lg p-4 flex items-center gap-4 cursor-pointer transition-colors border border-transparent hover:border-gray-600"
+      className="bg-gray-50 hover:bg-gray-100 rounded-lg p-4 flex items-center gap-4 cursor-pointer transition-colors border border-transparent hover:border-gray-400"
     >
-      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${accent} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md`}>
+      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${accent} flex items-center justify-center text-ink font-bold flex-shrink-0 shadow-md`}>
         {initials(grp.first_name)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold truncate">{grp.first_name}</p>
+        <p className="text-ink font-semibold truncate">{grp.first_name}</p>
         <p className="text-gray-400 text-sm font-mono">ID: {grp.borrower_code}</p>
       </div>
       <div className="text-center flex-shrink-0 px-3 hidden sm:block">
-        <p className="text-white font-semibold">{grp.book_count ?? grp.books.length}</p>
+        <p className="text-ink font-semibold">{grp.book_count ?? grp.books.length}</p>
         <p className="text-xs text-gray-500">book{(grp.book_count ?? grp.books.length) !== 1 ? 's' : ''}</p>
       </div>
       {secondaryValue != null && (
         <div className="text-center flex-shrink-0 px-3 hidden md:block">
-          <p className="text-warning-400 font-semibold">{secondaryValue}</p>
+          <p className="text-warning-600 font-semibold">{secondaryValue}</p>
           <p className="text-xs text-gray-500">{secondaryLabel}</p>
         </div>
       )}
@@ -46,7 +46,7 @@ function BorrowerRow({ grp, accent, metricLabel, metricValue, metricClassName, s
 function StatusPill({ status }) {
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-      status === 'Paid' ? 'bg-success-900/50 text-success-300' : 'bg-warning-900/50 text-warning-300'
+      status === 'Paid' ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
     }`}>
       {status}
     </span>
@@ -231,7 +231,7 @@ function OverdueBooks() {
   if (loading && overdueGroups.length === 0 && fineGroups.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -240,10 +240,10 @@ function OverdueBooks() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="icon-circle from-danger-500 to-danger-600 w-12 h-12">
-          <AlertIcon className="w-6 h-6 text-white" />
+          <AlertIcon className="w-6 h-6 text-ink" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Overdue & Fines</h1>
+          <h1 className="text-3xl font-bold text-ink">Overdue & Fines</h1>
           <p className="text-gray-400 mt-1">Track overdue books, manage fines, and review payment history</p>
         </div>
       </div>
@@ -253,11 +253,11 @@ function OverdueBooks() {
         <div className="stat-card">
           <div className="flex items-center gap-3">
             <div className="stat-icon from-danger-500 to-danger-600">
-              <AlertIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <AlertIcon className="w-4 h-4 sm:w-5 sm:h-5 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Books Overdue</p>
-              <p className="text-xl sm:text-2xl font-bold text-danger-400 leading-tight mt-0.5">{booksOverdueCount}</p>
+              <p className="text-xl sm:text-2xl font-bold text-danger-600 leading-tight mt-0.5">{booksOverdueCount}</p>
               <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{overdueGroups.length} borrower{overdueGroups.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
@@ -265,7 +265,7 @@ function OverdueBooks() {
         <div className="stat-card">
           <div className="flex items-center gap-3">
             <div className="stat-icon from-primary-500 to-primary-600">
-              <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Borrowers Affected</p>
@@ -277,11 +277,11 @@ function OverdueBooks() {
         <div className="stat-card">
           <div className="flex items-center gap-3">
             <div className="stat-icon from-warning-500 to-warning-600">
-              <CurrencyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <CurrencyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Outstanding</p>
-              <p className="text-xl sm:text-2xl font-bold text-warning-400 leading-tight mt-0.5">{formatRand(totalOutstanding)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-warning-600 leading-tight mt-0.5">{formatRand(totalOutstanding)}</p>
               <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Unpaid fines</p>
             </div>
           </div>
@@ -289,11 +289,11 @@ function OverdueBooks() {
         <div className="stat-card">
           <div className="flex items-center gap-3">
             <div className="stat-icon from-success-500 to-success-600">
-              <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-400 text-xs font-medium uppercase tracking-wide truncate">Collected</p>
-              <p className="text-xl sm:text-2xl font-bold text-success-400 leading-tight mt-0.5">{formatRand(totalCollected)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-success-600 leading-tight mt-0.5">{formatRand(totalCollected)}</p>
               <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Fines paid to date</p>
             </div>
           </div>
@@ -301,33 +301,33 @@ function OverdueBooks() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-700 overflow-x-auto">
+      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
         <button
           onClick={() => setTab('overdue')}
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-            tab === 'overdue' ? 'border-danger-500 text-danger-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+            tab === 'overdue' ? 'border-danger-300 text-danger-600' : 'border-transparent text-gray-400 hover:text-ink'
           }`}
         >
           Overdue Now
           {overdueGroups.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-xs bg-danger-900/60 text-danger-300">{overdueGroups.length}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-xs bg-danger-50 text-danger-700">{overdueGroups.length}</span>
           )}
         </button>
         <button
           onClick={() => setTab('fines')}
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-            tab === 'fines' ? 'border-warning-500 text-warning-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+            tab === 'fines' ? 'border-warning-300 text-warning-600' : 'border-transparent text-gray-400 hover:text-ink'
           }`}
         >
           All Fines
           {fineGroups.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-xs bg-warning-900/60 text-warning-300">{fineGroups.length}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-xs bg-warning-50 text-warning-700">{fineGroups.length}</span>
           )}
         </button>
         <button
           onClick={() => setTab('transactions')}
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-            tab === 'transactions' ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-200'
+            tab === 'transactions' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-400 hover:text-ink'
           }`}
         >
           <ReceiptIcon className="w-4 h-4" />
@@ -340,9 +340,9 @@ function OverdueBooks() {
         overdueGroups.length === 0 ? (
           <div className="card text-center py-10">
             <div className="icon-circle from-success-500 to-success-600 w-14 h-14 mx-auto mb-4">
-              <CheckIcon className="w-7 h-7 text-white" />
+              <CheckIcon className="w-7 h-7 text-ink" />
             </div>
-            <p className="text-white font-semibold">Nothing overdue right now</p>
+            <p className="text-ink font-semibold">Nothing overdue right now</p>
             <p className="text-gray-400 text-sm mt-1">Every borrowed book is within its due date</p>
           </div>
         ) : (
@@ -355,7 +355,7 @@ function OverdueBooks() {
                   accent="from-danger-500 to-danger-700"
                   metricLabel="longest overdue"
                   metricValue={`${grp.max_days_overdue}d`}
-                  metricClassName="text-danger-400"
+                  metricClassName="text-danger-600"
                   secondaryValue={formatRand(grp.total_outstanding)}
                   secondaryLabel="fine due"
                   onClick={() => openBorrower(grp, 'overdue')}
@@ -382,7 +382,7 @@ function OverdueBooks() {
                   accent="from-primary-500 to-primary-700"
                   metricLabel="balance due"
                   metricValue={formatRand(grp.total_outstanding)}
-                  metricClassName={grp.total_outstanding > 0 ? 'text-danger-400' : 'text-success-400'}
+                  metricClassName={grp.total_outstanding > 0 ? 'text-danger-600' : 'text-success-600'}
                   onClick={() => openBorrower(grp, 'fines')}
                 />
               ))}
@@ -396,7 +396,7 @@ function OverdueBooks() {
         <div className="card">
           {txLoading && transactions.length === 0 ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
             </div>
           ) : transactions.length === 0 ? (
             <p className="text-gray-400 text-center py-6">No fine payment activity yet</p>
@@ -404,7 +404,7 @@ function OverdueBooks() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-gray-500 text-xs uppercase border-b border-gray-700">
+                  <tr className="text-left text-gray-500 text-xs uppercase border-b border-gray-200">
                     <th className="pb-3 pr-4 font-medium">When</th>
                     <th className="pb-3 pr-4 font-medium">Borrower</th>
                     <th className="pb-3 pr-4 font-medium">Book</th>
@@ -414,14 +414,14 @@ function OverdueBooks() {
                     <th className="pb-3 font-medium text-right">&nbsp;</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700/60">
+                <tbody className="divide-y divide-gray-200">
                   {transactions.map((txn) => (
-                    <tr key={txn.payment_id} className="text-gray-300">
+                    <tr key={txn.payment_id} className="text-gray-600">
                       <td className="py-3 pr-4 whitespace-nowrap text-gray-400">{formatDateTime(txn.occurred_at)}</td>
                       <td className="py-3 pr-4">
                         <button
                           onClick={() => jumpToBorrower(txn.borrower_id, 'fines')}
-                          className="text-primary-400 hover:text-primary-300 font-medium text-left"
+                          className="text-primary-600 hover:text-primary-700 font-medium text-left"
                         >
                           {txn.first_name}
                         </button>
@@ -433,12 +433,12 @@ function OverdueBooks() {
                       </td>
                       <td className="py-3 pr-4">
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          txn.action === 'Paid' ? 'bg-success-900/50 text-success-300' : 'bg-gray-600/60 text-gray-300'
+                          txn.action === 'Paid' ? 'bg-success-50 text-success-700' : 'bg-gray-100 text-gray-600'
                         }`}>
                           {txn.action}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 text-right font-semibold text-warning-400 whitespace-nowrap">
+                      <td className="py-3 pr-4 text-right font-semibold text-warning-600 whitespace-nowrap">
                         {formatRand(txn.amount)}
                       </td>
                       <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{txn.processed_by_email || '—'}</td>
@@ -468,14 +468,14 @@ function OverdueBooks() {
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-white">{selected.first_name}</h2>
-                <p className="text-primary-400 font-mono text-sm">ID: {selected.borrower_code}</p>
+                <h2 className="text-2xl font-bold text-ink">{selected.first_name}</h2>
+                <p className="text-primary-600 font-mono text-sm">ID: {selected.borrower_code}</p>
               </div>
               <div className="flex items-center gap-4">
                 {selected.__tab === 'overdue' && hasPaidHistory(selected) && (
                   <button
                     onClick={() => jumpToBorrower(selected.borrower_id, 'fines')}
-                    className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
                     title="View this borrower's full fine & payment history"
                   >
                     <LinkIcon className="w-4 h-4" />
@@ -485,14 +485,14 @@ function OverdueBooks() {
                 {selected.__tab === 'fines' && hasActiveOverdueBooks(selected) && (
                   <button
                     onClick={() => jumpToBorrower(selected.borrower_id, 'overdue')}
-                    className="flex items-center gap-1.5 text-xs font-medium text-danger-400 hover:text-danger-300 transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-medium text-danger-600 hover:text-danger-700 transition-colors"
                     title="View this borrower's active overdue books"
                   >
                     <LinkIcon className="w-4 h-4" />
                     Overdue Now
                   </button>
                 )}
-                <button onClick={closeModal} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+                <button onClick={closeModal} className="text-gray-400 hover:text-ink text-2xl leading-none">&times;</button>
               </div>
             </div>
 
@@ -500,7 +500,7 @@ function OverdueBooks() {
               {selected.books.map((book) => {
                 const isLocked = book.follow_up_id && book.follow_up_status !== 'Pending'
                 return (
-                  <div key={book.fine_id} className="bg-gray-700 rounded-lg p-4 flex gap-4">
+                  <div key={book.fine_id} className="bg-gray-50 rounded-lg p-4 flex gap-4">
                     {book.status === 'Unpaid' && (
                       <input
                         type="checkbox"
@@ -518,30 +518,30 @@ function OverdueBooks() {
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold truncate">{book.title}</p>
+                      <p className="text-ink font-semibold truncate">{book.title}</p>
                       <p className="text-gray-400 text-sm">by {book.author} · Copy #{book.copy_number}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-xs">
                         <div>
                           <p className="text-gray-500">Due</p>
-                          <p className="text-gray-300">{formatDate(book.due_date)}</p>
+                          <p className="text-gray-600">{formatDate(book.due_date)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500">Days Overdue</p>
-                          <p className="text-danger-400 font-semibold">{book.days_overdue}</p>
+                          <p className="text-danger-600 font-semibold">{book.days_overdue}</p>
                         </div>
                         <div>
                           <p className="text-gray-500">Rate Applied</p>
-                          <p className="text-gray-300">{formatRand(book.rate_applied)}/day</p>
+                          <p className="text-gray-600">{formatRand(book.rate_applied)}/day</p>
                         </div>
                         <div>
                           <p className="text-gray-500">Amount</p>
-                          <p className="text-warning-400 font-semibold">{formatRand(book.amount)}</p>
+                          <p className="text-warning-600 font-semibold">{formatRand(book.amount)}</p>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <StatusPill status={book.status} />
                         {book.checkout_status && (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-600/60 text-gray-300">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
                             {book.checkout_status}
                           </span>
                         )}
@@ -560,7 +560,7 @@ function OverdueBooks() {
                             onChange={() => toggleFollowUp(book)}
                             className="w-4 h-4"
                           />
-                          <span className={isLocked ? 'text-gray-500' : 'text-gray-300'}>
+                          <span className={isLocked ? 'text-gray-500' : 'text-gray-600'}>
                             {isLocked ? `In Follow Ups (${book.follow_up_status})` : 'Add to Follow Ups'}
                           </span>
                         </label>
@@ -590,10 +590,10 @@ function OverdueBooks() {
               })}
             </div>
 
-            <div className="border-t border-gray-600 pt-4 space-y-4">
+            <div className="border-t border-gray-300 pt-4 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400 font-medium">Balance Due</span>
-                <span className="text-2xl font-bold text-danger-400">
+                <span className="text-2xl font-bold text-danger-600">
                   {formatRand(selected.books.filter(b => b.status === 'Unpaid').reduce((s, b) => s + Number(b.amount || 0), 0))}
                 </span>
               </div>

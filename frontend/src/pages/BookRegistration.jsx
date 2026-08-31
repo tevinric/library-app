@@ -355,7 +355,7 @@ function BookRegistration() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Register Books</h1>
+        <h1 className="text-3xl font-bold text-ink">Register Books</h1>
         <p className="text-gray-400 mt-1">Search existing books or register new ones</p>
       </div>
 
@@ -363,10 +363,10 @@ function BookRegistration() {
       {searchParams.get('expand') === 'true' && (
         <div className="alert-success">
           <div className="flex items-start gap-3">
-            <BookIcon className="w-6 h-6 text-success-400 flex-shrink-0 mt-1" />
+            <BookIcon className="w-6 h-6 text-success-600 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="font-semibold text-success-100 mb-1">Ready to Add Copies</h3>
-              <p className="text-success-200 text-sm">
+              <h3 className="font-semibold text-success-800 mb-1">Ready to Add Copies</h3>
+              <p className="text-success-800 text-sm">
                 The book you selected is shown below. Click "View Copies" to see existing copies and add more.
               </p>
             </div>
@@ -376,7 +376,7 @@ function BookRegistration() {
 
       {/* Barcode Scanner */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           Quick Lookup: Scan Barcode
         </label>
         <BarcodeScanner
@@ -392,7 +392,7 @@ function BookRegistration() {
 
       {/* Search Bar */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           Search Existing Books (before registering)
         </label>
         <input
@@ -400,24 +400,24 @@ function BookRegistration() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by title, author, or ISBN..."
-          className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
         />
       </div>
 
       {/* Search Results */}
       {books.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">Search Results</h2>
+          <h2 className="text-xl font-semibold text-ink mb-4">Search Results</h2>
           <div className="space-y-4">
             {books.map((book) => (
-              <div key={book.id} className="bg-gray-700 rounded-lg p-4">
+              <div key={book.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{book.title}</h3>
+                    <h3 className="text-lg font-semibold text-ink">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
                     {book.isbn && <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>}
                     <div className="mt-2 flex gap-4 text-sm">
-                      <span className="text-success-400">
+                      <span className="text-success-600">
                         {book.available_copies} available
                       </span>
                       <span className="text-gray-400">
@@ -437,28 +437,28 @@ function BookRegistration() {
 
                 {/* Show copies when expanded */}
                 {selectedBookId === book.id && (
-                  <div className="mt-4 border-t border-gray-600 pt-4">
-                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                      <BookIcon className="w-5 h-5 text-primary-400" />
+                  <div className="mt-4 border-t border-gray-300 pt-4">
+                    <h4 className="font-semibold text-ink mb-3 flex items-center gap-2">
+                      <BookIcon className="w-5 h-5 text-primary-600" />
                       <span>Physical Copies</span>
                     </h4>
 
                     {copies.length === 0 ? (
-                      <div className="bg-warning-900/20 border border-warning-500/30 rounded-lg p-4 mb-4">
-                        <p className="text-warning-200 text-sm mb-2">
+                      <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-4">
+                        <p className="text-warning-800 text-sm mb-2">
                           ⚠️ No physical copies added yet. Add at least one copy to enable checkout.
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-2 mb-4">
                         {copies.map((copy) => (
-                          <div key={copy.id} className="bg-gray-800 p-3 rounded-lg hover:bg-gray-750 transition-colors">
+                          <div key={copy.id} className="bg-white p-3 rounded-lg hover:bg-gray-100 transition-colors">
                             {editingCopyId === copy.id ? (
                               // Edit mode
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-gray-300 font-medium text-sm">Copy #{copy.copy_number}</span>
-                                  <span className={`text-xs font-semibold ${copy.status === 'Available' ? 'text-success-400' : 'text-warning-400'}`}>
+                                  <span className="text-gray-600 font-medium text-sm">Copy #{copy.copy_number}</span>
+                                  <span className={`text-xs font-semibold ${copy.status === 'Available' ? 'text-success-600' : 'text-warning-600'}`}>
                                     {copy.status}
                                   </span>
                                 </div>
@@ -469,7 +469,7 @@ function BookRegistration() {
                                   <select
                                     value={editCopyData.condition}
                                     onChange={(e) => setEditCopyData({...editCopyData, condition: e.target.value})}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink text-sm"
                                   >
                                     <option value="Excellent">Excellent</option>
                                     <option value="Good">Good</option>
@@ -486,7 +486,7 @@ function BookRegistration() {
                                     value={editCopyData.location}
                                     onChange={(e) => setEditCopyData({...editCopyData, location: e.target.value})}
                                     placeholder="e.g., Shelf A3, Room 101"
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink text-sm"
                                   />
                                 </div>
 
@@ -498,7 +498,7 @@ function BookRegistration() {
                                     onChange={(e) => setEditCopyData({...editCopyData, notes: e.target.value})}
                                     placeholder="Any additional notes about this copy"
                                     rows="2"
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink text-sm"
                                   />
                                 </div>
 
@@ -526,8 +526,8 @@ function BookRegistration() {
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-gray-300 font-medium text-sm">Copy #{copy.copy_number}</span>
-                                    <span className={`text-xs font-semibold ${copy.status === 'Available' ? 'text-success-400' : 'text-warning-400'}`}>
+                                    <span className="text-gray-600 font-medium text-sm">Copy #{copy.copy_number}</span>
+                                    <span className={`text-xs font-semibold ${copy.status === 'Available' ? 'text-success-600' : 'text-warning-600'}`}>
                                       {copy.status}
                                     </span>
                                   </div>
@@ -535,7 +535,7 @@ function BookRegistration() {
                                     <span className="text-gray-500">Condition:</span> {copy.condition}
                                   </div>
                                   {copy.location ? (
-                                    <div className="text-xs text-primary-400 flex items-center gap-1">
+                                    <div className="text-xs text-primary-600 flex items-center gap-1">
                                       <span className="text-gray-500">📍 Location:</span>
                                       <span className="font-medium">{copy.location}</span>
                                     </div>
@@ -562,8 +562,8 @@ function BookRegistration() {
                       </div>
                     )}
 
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-3">
+                    <div className="bg-white rounded-lg p-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-3">
                         {copies.length === 0 ? 'Add First Copy' : 'Add More Copies'}
                       </label>
 
@@ -577,7 +577,7 @@ function BookRegistration() {
                             max="50"
                             value={numCopiesToAdd}
                             onChange={(e) => setNumCopiesToAdd(parseInt(e.target.value) || 1)}
-                            className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-medium"
+                            className="w-24 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink font-medium"
                           />
                         </div>
 
@@ -591,7 +591,7 @@ function BookRegistration() {
                             value={copyLocation}
                             onChange={(e) => setCopyLocation(e.target.value)}
                             placeholder="e.g., Shelf A3, Room 101, Section Fiction"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"
+                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink text-sm"
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             All {numCopiesToAdd} cop{numCopiesToAdd > 1 ? 'ies' : 'y'} will be assigned to this location
@@ -611,7 +611,7 @@ function BookRegistration() {
                         </button>
                       </div>
 
-                      <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-700">
+                      <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
                         💡 Each copy represents a physical book that can be checked out separately. You can edit locations later.
                       </p>
                     </div>
@@ -648,12 +648,12 @@ function BookRegistration() {
         <div className="modal-overlay">
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-success-500/20 flex items-center justify-center mx-auto mb-4">
-                <BookIcon className="w-6 h-6 text-success-400" />
+              <div className="w-12 h-12 rounded-full bg-success-50 flex items-center justify-center mx-auto mb-4">
+                <BookIcon className="w-6 h-6 text-success-600" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Book Registered!</h2>
-              <p className="text-gray-300 mb-1">
-                <span className="text-white font-medium">"{registeredBook.title}"</span> has been added to the system.
+              <h2 className="text-xl font-bold text-ink mb-2">Book Registered!</h2>
+              <p className="text-gray-600 mb-1">
+                <span className="text-ink font-medium">"{registeredBook.title}"</span> has been added to the system.
               </p>
               <p className="text-gray-400 text-sm mb-6">
                 Would you like to add a physical copy to the library now?
@@ -682,17 +682,17 @@ function BookRegistration() {
       {showAddCopyModal && registeredBook && (
         <div className="modal-overlay" onClick={() => { setShowAddCopyModal(false); setRegisteredBook(null) }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold text-white mb-1">Add Physical Copy</h2>
+            <h2 className="text-xl font-bold text-ink mb-1">Add Physical Copy</h2>
             <p className="text-gray-400 text-sm mb-4">
-              Adding a copy for: <span className="text-white font-medium">{registeredBook.title}</span>
+              Adding a copy for: <span className="text-ink font-medium">{registeredBook.title}</span>
             </p>
             <form onSubmit={handleCreateCopyAfterRegister} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Condition</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Condition</label>
                 <select
                   value={newCopyData.condition}
                   onChange={(e) => setNewCopyData({ ...newCopyData, condition: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 >
                   <option value="Excellent">Excellent</option>
                   <option value="Good">Good</option>
@@ -701,23 +701,23 @@ function BookRegistration() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Location</label>
                 <input
                   type="text"
                   value={newCopyData.location}
                   onChange={(e) => setNewCopyData({ ...newCopyData, location: e.target.value })}
                   placeholder="e.g., Shelf A3, Room 101"
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Notes</label>
                 <textarea
                   value={newCopyData.notes}
                   onChange={(e) => setNewCopyData({ ...newCopyData, notes: e.target.value })}
                   rows="2"
                   placeholder="Optional notes about this copy"
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
               <div className="flex gap-3">
@@ -743,7 +743,7 @@ function BookRegistration() {
         <div className="card">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-white">Register New Book</h2>
+              <h2 className="text-xl font-semibold text-ink">Register New Book</h2>
               <p className="text-sm text-gray-400 mt-1">
                 Enter ISBN to auto-fetch details from OpenLibrary
               </p>
@@ -752,7 +752,7 @@ function BookRegistration() {
               <img
                 src={formData.cover_large}
                 alt={formData.title}
-                className="w-32 h-auto rounded-lg shadow-xl border-2 border-primary-500"
+                className="w-32 h-auto rounded-lg shadow-xl border-2 border-primary-600"
               />
             )}
           </div>
@@ -761,10 +761,10 @@ function BookRegistration() {
             {/* OpenLibrary Fetch Section */}
             <div className="alert-success">
               <div className="flex items-center gap-3 mb-3">
-                <BookIcon className="w-6 h-6 text-success-400" />
+                <BookIcon className="w-6 h-6 text-success-600" />
                 <div>
-                  <h3 className="font-semibold text-success-100">Auto-Fill from OpenLibrary</h3>
-                  <p className="text-sm text-success-200">Enter ISBN below and click fetch to auto-populate book details</p>
+                  <h3 className="font-semibold text-success-800">Auto-Fill from OpenLibrary</h3>
+                  <p className="text-sm text-success-800">Enter ISBN below and click fetch to auto-populate book details</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -774,7 +774,7 @@ function BookRegistration() {
                   value={formData.isbn}
                   onChange={handleInputChange}
                   placeholder="Enter ISBN-10 or ISBN-13"
-                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
                 <button
                   type="button"
@@ -790,7 +790,7 @@ function BookRegistration() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Title *
                 </label>
                 <input
@@ -799,12 +799,12 @@ function BookRegistration() {
                   value={formData.title}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Author *
                 </label>
                 <input
@@ -813,12 +813,12 @@ function BookRegistration() {
                   value={formData.author}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Barcode
                 </label>
                 <input
@@ -826,7 +826,7 @@ function BookRegistration() {
                   name="barcode"
                   value={formData.barcode}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                   placeholder="Leave empty to use ISBN as barcode"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -835,7 +835,7 @@ function BookRegistration() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Publisher
                 </label>
                 <input
@@ -843,12 +843,12 @@ function BookRegistration() {
                   name="publisher"
                   value={formData.publisher}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Publication Year
                 </label>
                 <input
@@ -856,12 +856,12 @@ function BookRegistration() {
                   name="publication_year"
                   value={formData.publication_year}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Genre
                 </label>
                 <input
@@ -869,12 +869,12 @@ function BookRegistration() {
                   name="genre"
                   value={formData.genre}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Language
                 </label>
                 <input
@@ -882,12 +882,12 @@ function BookRegistration() {
                   name="language"
                   value={formData.language}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Pages
                 </label>
                 <input
@@ -895,13 +895,13 @@ function BookRegistration() {
                   name="pages"
                   value={formData.pages}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-ink"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
                 Description
               </label>
               <textarea

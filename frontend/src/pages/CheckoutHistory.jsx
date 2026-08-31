@@ -61,7 +61,7 @@ function CheckoutHistory() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -70,13 +70,13 @@ function CheckoutHistory() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Checkout History</h1>
+        <h1 className="text-3xl font-bold text-ink">Checkout History</h1>
         <p className="text-gray-400 mt-1">View complete checkout history</p>
       </div>
 
       {/* Barcode Scanner */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           Quick Lookup: Scan Barcode
         </label>
         <BarcodeScanner
@@ -92,7 +92,7 @@ function CheckoutHistory() {
 
       {/* Text Search */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           Or search manually
         </label>
         <div className="flex gap-2">
@@ -123,15 +123,15 @@ function CheckoutHistory() {
                 onError={(e) => e.target.style.display = 'none'}
               />
             ) : (
-              <div className="w-12 h-16 bg-success-900/50 rounded flex items-center justify-center flex-shrink-0">
-                <BookIcon className="w-6 h-6 text-success-400" />
+              <div className="w-12 h-16 bg-success-50 rounded flex items-center justify-center flex-shrink-0">
+                <BookIcon className="w-6 h-6 text-success-600" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-success-100 font-semibold truncate">{scannedBook.title}</p>
-              <p className="text-success-200 text-sm">by {scannedBook.author}</p>
+              <p className="text-success-800 font-semibold truncate">{scannedBook.title}</p>
+              <p className="text-success-800 text-sm">by {scannedBook.author}</p>
               {scannedBook.isbn && (
-                <p className="text-success-300 text-xs mt-0.5">ISBN: {scannedBook.isbn}</p>
+                <p className="text-success-700 text-xs mt-0.5">ISBN: {scannedBook.isbn}</p>
               )}
             </div>
             <button
@@ -157,7 +157,7 @@ function CheckoutHistory() {
         </div>
       ) : (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {history.length} checkout record{history.length !== 1 ? 's' : ''}
             {scannedBook && (
               <span className="text-sm font-normal text-gray-400 ml-2">
@@ -169,18 +169,18 @@ function CheckoutHistory() {
           {/* Mobile Card View */}
           <div className="block md:hidden space-y-3">
             {history.map((record) => (
-              <div key={record.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
+              <div key={record.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white truncate">{record.title}</p>
+                    <p className="font-medium text-ink truncate">{record.title}</p>
                     <p className="text-sm text-gray-400">by {record.author}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
                     record.status === 'Returned'
-                      ? 'bg-success-900/50 text-success-300'
+                      ? 'bg-success-50 text-success-700'
                       : record.status === 'Checked Out'
-                      ? 'bg-primary-900/50 text-primary-300'
-                      : 'bg-danger-900/50 text-danger-300'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'bg-danger-50 text-danger-700'
                   }`}>
                     {record.status}
                   </span>
@@ -188,30 +188,30 @@ function CheckoutHistory() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div>
                     <p className="text-gray-500 text-xs uppercase tracking-wide">Borrower</p>
-                    <p className="text-white">{record.first_name}</p>
+                    <p className="text-ink">{record.first_name}</p>
                     <p className="text-gray-400 text-xs">ID: {record.borrower_id}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs uppercase tracking-wide">Copy</p>
-                    <p className="text-gray-300">#{record.copy_number}</p>
+                    <p className="text-gray-600">#{record.copy_number}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs uppercase tracking-wide">Checkout Date</p>
-                    <p className="text-gray-300">{format(new Date(record.checkout_date), 'MMM d, yyyy')}</p>
+                    <p className="text-gray-600">{format(new Date(record.checkout_date), 'MMM d, yyyy')}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs uppercase tracking-wide">Due Date</p>
-                    <p className="text-gray-300">{format(new Date(record.due_date), 'MMM d, yyyy')}</p>
+                    <p className="text-gray-600">{format(new Date(record.due_date), 'MMM d, yyyy')}</p>
                   </div>
                   {record.return_date && (
                     <div>
                       <p className="text-gray-500 text-xs uppercase tracking-wide">Returned</p>
-                      <p className="text-gray-300">{format(new Date(record.return_date), 'MMM d, yyyy')}</p>
+                      <p className="text-gray-600">{format(new Date(record.return_date), 'MMM d, yyyy')}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-gray-500 text-xs uppercase tracking-wide">Duration</p>
-                    <p className="text-gray-300">{Math.floor(record.duration_days)} days</p>
+                    <p className="text-gray-600">{Math.floor(record.duration_days)} days</p>
                   </div>
                 </div>
               </div>
@@ -238,36 +238,36 @@ function CheckoutHistory() {
                   <tr key={record.id}>
                     <td>
                       <div>
-                        <p className="font-medium text-white">{record.title}</p>
+                        <p className="font-medium text-ink">{record.title}</p>
                         <p className="text-sm text-gray-400">by {record.author}</p>
                       </div>
                     </td>
-                    <td className="text-gray-300">#{record.copy_number}</td>
+                    <td className="text-gray-600">#{record.copy_number}</td>
                     <td>
                       <div>
-                        <p className="text-white">{record.first_name}</p>
+                        <p className="text-ink">{record.first_name}</p>
                         <p className="text-sm text-gray-400">ID: {record.borrower_id}</p>
                       </div>
                     </td>
-                    <td className="text-gray-300">
+                    <td className="text-gray-600">
                       {format(new Date(record.checkout_date), 'MMM d, yyyy')}
                     </td>
-                    <td className="text-gray-300">
+                    <td className="text-gray-600">
                       {format(new Date(record.due_date), 'MMM d, yyyy')}
                     </td>
-                    <td className="text-gray-300">
+                    <td className="text-gray-600">
                       {record.return_date
                         ? format(new Date(record.return_date), 'MMM d, yyyy')
                         : '-'}
                     </td>
-                    <td className="text-gray-300">{Math.floor(record.duration_days)} days</td>
+                    <td className="text-gray-600">{Math.floor(record.duration_days)} days</td>
                     <td>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         record.status === 'Returned'
-                          ? 'bg-success-900/50 text-success-300'
+                          ? 'bg-success-50 text-success-700'
                           : record.status === 'Checked Out'
-                          ? 'bg-primary-900/50 text-primary-300'
-                          : 'bg-danger-900/50 text-danger-300'
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'bg-danger-50 text-danger-700'
                       }`}>
                         {record.status}
                       </span>

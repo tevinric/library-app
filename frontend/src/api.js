@@ -33,8 +33,12 @@ api.interceptors.response.use(
 
 // Public books (no auth required)
 const publicBaseURL = import.meta.env.PROD ? '' : (import.meta.env.VITE_ZOELIBRARYAPP_API_URL || 'http://localhost:5002')
-export const getPublicBooks = (search = '') =>
-  axios.get(`${publicBaseURL}/api/public/books`, { params: { search } })
+export const getPublicBooks = ({ search = '', genre = '', availableOnly = false } = {}) =>
+  axios.get(`${publicBaseURL}/api/public/books`, { params: { search, genre, available_only: availableOnly } })
+export const getPublicBookDetail = (id) =>
+  axios.get(`${publicBaseURL}/api/public/books/${id}`)
+export const getPublicGenres = () =>
+  axios.get(`${publicBaseURL}/api/public/genres`)
 
 // Health check
 export const healthCheck = () => api.get('/api/health')

@@ -32,7 +32,7 @@ import {
   AlertIcon,
   SettingsIcon
 } from './components/Icons'
-import zccLogo from './static/ZCC-logo.png'
+import zoeLogo from './static/ZOE-logo-blue.png'
 import './App.css'
 
 // Check if we're in development mode
@@ -147,8 +147,8 @@ function App() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -156,12 +156,16 @@ function App() {
   // Not authenticated - show landing page (PROD mode only)
   if (!IS_DEV_MODE && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+        {/* Soft brand-tinted backdrop */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary-50/70 via-white to-white" />
+        <div className="pointer-events-none absolute -top-32 -right-32 w-96 h-96 rounded-full bg-primary-100/60 blur-3xl" />
+
         {/* Top bar — admin login button top-right */}
-        <header className="flex justify-end p-4 sm:p-6">
+        <header className="relative flex justify-end p-4 sm:p-6">
           <button
             onClick={handleLogin}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700/60 text-gray-200 rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium border border-gray-600/50 hover:border-gray-500 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium border border-gray-300 shadow-sm text-sm"
           >
             <MicrosoftIcon className="w-4 h-4" />
             <span>Admin Login</span>
@@ -169,26 +173,32 @@ function App() {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-4">
+        <main className="relative flex-1 flex flex-col items-center justify-center gap-8 p-4 text-center">
           {/* Logo and Branding */}
-          <div className="text-center space-y-4">
+          <div className="space-y-5">
             <div className="flex justify-center">
-              <img src={zccLogo} alt="ZOE Community Church Library" className="w-20 h-20 object-contain" />
+              <img src={zoeLogo} alt="ZOE Community Church Library" className="w-24 h-24 object-contain" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">ZOE Community Church Library</h1>
+              <p className="text-primary-600 font-semibold tracking-wide uppercase text-xs mb-2">ZOE Community Church</p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink mb-2">Library</h1>
+              <p className="text-gray-500 max-w-md mx-auto">Explore our collection and find your next good read.</p>
             </div>
           </div>
 
           {/* Browse Library CTA */}
           <Link
             to="/browse"
-            className="flex items-center justify-center gap-3 px-10 py-4 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-300 font-semibold text-lg shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:-translate-y-1"
+            className="flex items-center justify-center gap-3 px-10 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all duration-300 font-semibold text-lg shadow-lg shadow-primary-600/25 hover:shadow-xl hover:shadow-primary-600/30 hover:-translate-y-0.5"
           >
             <BookIcon className="w-6 h-6" />
             <span>Browse the Library</span>
           </Link>
         </main>
+
+        <footer className="relative text-center py-6 text-gray-400 text-xs">
+          &copy; {new Date().getFullYear()} ZOE Community Church
+        </footer>
       </div>
     )
   }
@@ -196,13 +206,16 @@ function App() {
   // Authenticated but not authorized (PROD mode only)
   if (!IS_DEV_MODE && !isAuthorized) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Access Denied</h1>
-          <p className="text-gray-400 mb-6">You are not authorized to access this application.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="card text-center max-w-sm w-full">
+          <div className="icon-circle from-danger-500 to-danger-600 mx-auto mb-4">
+            <AlertIcon className="w-6 h-6 text-white" />
+          </div>
+          <h1 className="text-xl font-bold text-ink mb-2">Access Denied</h1>
+          <p className="text-gray-500 mb-6 text-sm">You are not authorized to access this application.</p>
           <button
             onClick={handleLogout}
-            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="btn-secondary w-full"
           >
             Sign Out
           </button>
@@ -213,23 +226,23 @@ function App() {
 
   // Authorized - show main app
   return (
-    <div className="min-h-screen bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-800 to-gray-900 border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-700/50">
+          <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-3 mb-3">
-              <img src={zccLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
+              <img src={zoeLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
               <div>
-                <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
-                <p className="text-xs text-gray-500">Management</p>
+                <h1 className="text-lg font-bold gradient-text leading-tight">ZOE Library</h1>
+                <p className="text-xs text-gray-400">Management</p>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-700/50">
-              <p className="text-xs text-gray-400 truncate">{currentUser?.email || accounts[0]?.username}</p>
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-500 truncate">{currentUser?.email || accounts[0]?.username}</p>
               {IS_DEV_MODE && (
-                <span className="inline-block mt-2 px-2 py-1 bg-warning-900/50 text-warning-300 text-xs rounded-md font-medium">
+                <span className="badge-warning inline-block mt-2">
                   DEV MODE
                 </span>
               )}
@@ -255,10 +268,10 @@ function App() {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-gray-700/50">
+          <div className="p-4 border-t border-gray-200">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700/50 hover:text-white rounded-lg transition-all duration-200 font-medium"
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-ink rounded-lg transition-all duration-200 font-medium text-sm"
             >
               <LogoutIcon className="w-5 h-5" />
               <span>Sign Out</span>
@@ -270,14 +283,14 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50 p-4 shadow-lg">
+        <header className="lg:hidden bg-white border-b border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={zccLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
+              <img src={zoeLogo} alt="ZOE Library" className="w-10 h-10 object-contain" />
               <div>
-                <h1 className="text-lg font-bold gradient-text">ZOE Library</h1>
+                <h1 className="text-lg font-bold gradient-text leading-tight">ZOE Library</h1>
                 {IS_DEV_MODE && (
-                  <span className="inline-block px-2 py-0.5 bg-warning-900/50 text-warning-300 text-xs rounded-md font-medium">
+                  <span className="badge-warning">
                     DEV MODE
                   </span>
                 )}
@@ -285,7 +298,7 @@ function App() {
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-300 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg"
+              className="text-gray-500 hover:text-ink transition-colors p-2 hover:bg-gray-100 rounded-lg"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {sidebarOpen ? (

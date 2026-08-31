@@ -89,9 +89,9 @@ function BarcodeScanner({
         onKeyPress={handleKeyPress}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full px-4 py-2 bg-gray-700 border rounded-lg text-white transition-all ${
-          isScanning ? 'border-primary-500 ring-2 ring-primary-500/50' : 'border-gray-600'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus:ring-2 focus:ring-primary-500 ${className}`}
+        className={`w-full px-4 py-2 bg-white border rounded-lg text-ink transition-all ${
+          isScanning ? 'border-primary-500 ring-2 ring-primary-100' : 'border-gray-300'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 ${className}`}
         autoComplete="off"
         spellCheck="false"
       />

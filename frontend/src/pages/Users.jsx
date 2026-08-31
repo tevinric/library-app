@@ -86,7 +86,7 @@ function Users() {
   if (loading && borrowers.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -96,7 +96,7 @@ function Users() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white">Users (Borrowers)</h1>
+          <h1 className="text-3xl font-bold text-ink">Users (Borrowers)</h1>
           <p className="text-gray-400 mt-1">Manage library users and borrowers</p>
         </div>
         <button onClick={handleNewBorrower} className="btn-primary self-start sm:self-auto">
@@ -122,15 +122,15 @@ function Users() {
         </div>
       ) : (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {borrowers.length} borrower{borrowers.length !== 1 ? 's' : ''}
           </h2>
           <div className="space-y-4">
             {borrowers.map((borrower) => (
-              <div key={borrower.id} className="bg-gray-700 rounded-lg p-4">
+              <div key={borrower.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-ink">
                       {borrower.first_name}
                     </h3>
                     <p className="text-gray-400">ID: {borrower.borrower_id}</p>
@@ -140,8 +140,8 @@ function Users() {
                     <div className="text-sm">
                       <span className={`px-3 py-1 rounded-full ${
                         borrower.active_checkouts > 0
-                          ? 'bg-primary-900/50 text-primary-300'
-                          : 'bg-gray-600 text-gray-300'
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'bg-gray-100 text-gray-600'
                       }`}>
                         {borrower.active_checkouts || 0} active checkout{borrower.active_checkouts !== 1 ? 's' : ''}
                       </span>
@@ -177,12 +177,12 @@ function Users() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">
+            <h2 className="text-2xl font-bold text-ink mb-4">
               {editingBorrower ? 'Edit Borrower' : 'New Borrower'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">First Name *</label>
                 <input
                   type="text"
                   value={formData.first_name}
@@ -191,7 +191,7 @@ function Users() {
                   className="w-full px-4 py-2"
                 />
               </div>
-              <div className="bg-gray-700 p-3 rounded-lg">
+              <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm text-gray-400">
                   A unique borrower ID will be automatically generated {editingBorrower ? '' : 'when you create this borrower'}.
                   {editingBorrower && ' The borrower ID remains unchanged when updating the name.'}

@@ -274,24 +274,24 @@ function CheckoutBooks() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Borrow</h1>
+        <h1 className="text-3xl font-bold text-ink">Borrow</h1>
         <p className="text-gray-400 mt-1">Lend books to borrowers</p>
       </div>
 
       {/* Progress Steps */}
       <div className="flex items-center justify-center gap-2 sm:gap-4">
-        <div className={`flex items-center ${step >= 1 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 1 ? 'bg-primary-600' : 'bg-gray-700'}`}>1</span>
+        <div className={`flex items-center ${step >= 1 ? 'text-primary-600' : 'text-gray-500'}`}>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${step >= 1 ? 'bg-primary-600 text-white' : 'bg-gray-100 border border-gray-300 text-gray-500'}`}>1</span>
           <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Book</span>
         </div>
-        <span className="text-gray-600 flex-shrink-0">→</span>
-        <div className={`flex items-center ${step >= 2 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-700'}`}>2</span>
+        <span className="text-gray-400 flex-shrink-0">→</span>
+        <div className={`flex items-center ${step >= 2 ? 'text-primary-600' : 'text-gray-500'}`}>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${step >= 2 ? 'bg-primary-600 text-white' : 'bg-gray-100 border border-gray-300 text-gray-500'}`}>2</span>
           <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Copy</span>
         </div>
-        <span className="text-gray-600 flex-shrink-0">→</span>
-        <div className={`flex items-center ${step >= 3 ? 'text-primary-400' : 'text-gray-500'}`}>
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step >= 3 ? 'bg-primary-600' : 'bg-gray-700'}`}>3</span>
+        <span className="text-gray-400 flex-shrink-0">→</span>
+        <div className={`flex items-center ${step >= 3 ? 'text-primary-600' : 'text-gray-500'}`}>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${step >= 3 ? 'bg-primary-600 text-white' : 'bg-gray-100 border border-gray-300 text-gray-500'}`}>3</span>
           <span className="ml-1 sm:ml-2 text-sm sm:text-base">Select Borrower</span>
         </div>
       </div>
@@ -299,12 +299,12 @@ function CheckoutBooks() {
       {/* Step 1: Select Book */}
       {step === 1 && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">Search for Book</h2>
+          <h2 className="text-xl font-semibold text-ink mb-4">Search for Book</h2>
 
           {/* Barcode Scanner Section */}
           {showBarcodeScanner && (
-            <div className="mb-6 pb-6 border-b border-gray-600">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="mb-6 pb-6 border-b border-gray-300">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
                 Quick Checkout: Scan Barcode
               </label>
               <BarcodeScanner
@@ -321,7 +321,7 @@ function CheckoutBooks() {
 
           {/* Manual Search Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Or search manually
             </label>
             <div className="flex gap-4 mb-4">
@@ -340,7 +340,7 @@ function CheckoutBooks() {
           {books.length > 0 && (
             <div className="space-y-3">
               {books.map((book) => (
-                <div key={book.id} className="bg-gray-700 rounded-lg p-4 flex items-center gap-4">
+                <div key={book.id} className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
                   {/* Cover image */}
                   {(book.cover_large || book.cover_medium) && (
                     <img
@@ -351,13 +351,13 @@ function CheckoutBooks() {
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white truncate">{book.title}</h3>
+                    <h3 className="text-lg font-semibold text-ink truncate">{book.title}</h3>
                     <p className="text-gray-400 text-sm">by {book.author}</p>
                     <div className="mt-1 space-y-0.5">
                       {book.isbn && <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>}
                       {book.barcode && <p className="text-sm text-gray-500">Barcode: {book.barcode}</p>}
                       <p className="text-sm">
-                        <span className="text-success-400 font-medium">{book.available_copies} available</span>
+                        <span className="text-success-600 font-medium">{book.available_copies} available</span>
                         <span className="text-gray-500"> of {book.total_copies} total</span>
                       </p>
                     </div>
@@ -382,7 +382,7 @@ function CheckoutBooks() {
           <div className="mb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h2 className="text-xl font-semibold text-white">"{selectedBook?.title}"</h2>
+                <h2 className="text-xl font-semibold text-ink">"{selectedBook?.title}"</h2>
                 <p className="text-gray-400 text-sm mt-1">by {selectedBook?.author}</p>
                 {selectedBook?.isbn && <p className="text-gray-500 text-sm">ISBN: {selectedBook.isbn}</p>}
                 {selectedBook?.barcode && <p className="text-gray-500 text-sm">Barcode: {selectedBook.barcode}</p>}
@@ -393,7 +393,7 @@ function CheckoutBooks() {
                 <img
                   src={selectedBook.cover_large || selectedBook.cover_medium}
                   alt={selectedBook.title}
-                  className="w-24 h-auto rounded-lg shadow-xl border-2 border-primary-500 ml-4"
+                  className="w-24 h-auto rounded-lg shadow-xl border-2 border-primary-600 ml-4"
                   onError={(e) => e.target.style.display = 'none'}
                 />
               ) : null}
@@ -406,17 +406,17 @@ function CheckoutBooks() {
               // No copies exist at all - show warning
               <div className="alert-warning mb-4">
                 <div className="flex items-start gap-3">
-                  <AlertIcon className="w-6 h-6 text-warning-400 flex-shrink-0 mt-1" />
+                  <AlertIcon className="w-6 h-6 text-warning-600 flex-shrink-0 mt-1" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-warning-100 mb-2">No Copies Available</h3>
+                    <h3 className="font-semibold text-warning-800 mb-2">No Copies Available</h3>
                     <div>
-                      <p className="text-warning-200 mb-3">
+                      <p className="text-warning-800 mb-3">
                         This book has been registered but no physical copies have been added yet.
                       </p>
-                      <p className="text-warning-200 mb-3">
+                      <p className="text-warning-800 mb-3">
                         <strong>To checkout this book:</strong>
                       </p>
-                      <ol className="list-decimal list-inside text-warning-200 space-y-1 mb-3">
+                      <ol className="list-decimal list-inside text-warning-800 space-y-1 mb-3">
                         <li>Go to the <strong>Register Books</strong> page</li>
                         <li>Search for this book</li>
                         <li>Click "View Copies"</li>
@@ -437,14 +437,14 @@ function CheckoutBooks() {
               </div>
             ) : (
               // All copies are checked out - show info box with borrower details
-              <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
+              <div className="bg-primary-50 border border-primary-300 rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-primary-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-blue-100 mb-3">No Copies Available - All Currently Borrowed</h3>
-                    <p className="text-blue-200 mb-4">
+                    <h3 className="font-semibold text-primary-800 mb-3">No Copies Available - All Currently Borrowed</h3>
+                    <p className="text-primary-800 mb-4">
                       All <strong>{selectedBook?.total_copies}</strong> cop{selectedBook?.total_copies > 1 ? 'ies' : 'y'} of this book {selectedBook?.total_copies > 1 ? 'are' : 'is'} currently borrowed.
                     </p>
 
@@ -455,38 +455,38 @@ function CheckoutBooks() {
                         const dueStatus = copy.checkout_info?.due_date ? getDueStatus(copy.checkout_info.due_date) : null
 
                         return (
-                          <div key={copy.id} className="bg-blue-900/40 border border-blue-500/30 rounded-lg p-4">
+                          <div key={copy.id} className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <p className="text-blue-100 font-bold text-lg mb-2">
+                                <p className="text-primary-800 font-bold text-lg mb-2">
                                   Copy #{copy.copy_number}
                                 </p>
                                 {copy.checkout_info ? (
                                   <div className="space-y-2">
                                     <div>
-                                      <p className="text-blue-300 text-xs uppercase tracking-wide mb-1">Borrower</p>
-                                      <p className="text-white font-semibold text-base">
+                                      <p className="text-primary-700 text-xs uppercase tracking-wide mb-1">Borrower</p>
+                                      <p className="text-ink font-semibold text-base">
                                         {copy.checkout_info.borrower_name}
                                       </p>
-                                      <p className="text-primary-400 font-mono font-semibold text-sm">
+                                      <p className="text-primary-600 font-mono font-semibold text-sm">
                                         ID: {copy.checkout_info.borrower_id}
                                       </p>
                                     </div>
                                     {daysSince !== null && (
                                       <div>
-                                        <p className="text-blue-300 text-xs uppercase tracking-wide mb-1">Borrowed For</p>
-                                        <p className="text-white font-semibold text-base">
+                                        <p className="text-primary-700 text-xs uppercase tracking-wide mb-1">Borrowed For</p>
+                                        <p className="text-ink font-semibold text-base">
                                           {daysSince} day{daysSince !== 1 ? 's' : ''}
                                         </p>
                                       </div>
                                     )}
                                     {dueStatus && (
                                       <div>
-                                        <p className="text-blue-300 text-xs uppercase tracking-wide mb-1">Status</p>
+                                        <p className="text-primary-700 text-xs uppercase tracking-wide mb-1">Status</p>
                                         <p className={`font-bold text-base ${
-                                          dueStatus.status === 'overdue' ? 'text-red-400' :
-                                          dueStatus.status === 'due-today' ? 'text-warning-400' :
-                                          'text-success-400'
+                                          dueStatus.status === 'overdue' ? 'text-danger-600' :
+                                          dueStatus.status === 'due-today' ? 'text-warning-600' :
+                                          'text-success-600'
                                         }`}>
                                           {dueStatus.text}
                                           {dueStatus.status === 'overdue' && ' ⚠️'}
@@ -495,7 +495,7 @@ function CheckoutBooks() {
                                     )}
                                   </div>
                                 ) : (
-                                  <p className="text-blue-300 text-sm italic">Checkout information not available</p>
+                                  <p className="text-primary-700 text-sm italic">Checkout information not available</p>
                                 )}
                               </div>
                             </div>
@@ -505,10 +505,10 @@ function CheckoutBooks() {
                     </div>
 
                     {/* Link to Borrowed Books filtered to this book */}
-                    <div className="mt-4 pt-4 border-t border-blue-500/30">
+                    <div className="mt-4 pt-4 border-t border-primary-200">
                       <Link
                         to={`/checked-out?search=${encodeURIComponent(selectedBook?.title || '')}`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-700/50 hover:bg-blue-600/60 text-blue-100 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 hover:bg-primary-200 text-primary-800 hover:text-ink rounded-lg text-sm font-medium transition-all duration-200 border border-primary-300 hover:border-primary-400"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -523,16 +523,16 @@ function CheckoutBooks() {
           ) : (
             // Show available copies
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-white mb-3">
+              <h3 className="text-lg font-semibold text-ink mb-3">
                 Select a Copy ({copies.length} available)
               </h3>
               <div className="space-y-3">
                 {copies.map((copy) => (
-                  <div key={copy.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-start hover:bg-gray-600 transition-colors">
+                  <div key={copy.id} className="bg-gray-50 rounded-lg p-4 flex justify-between items-start hover:bg-gray-200 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <p className="text-white font-medium">Copy #{copy.copy_number}</p>
-                        <span className="px-2 py-1 bg-success-900/50 text-success-300 text-xs rounded-full">
+                        <p className="text-ink font-medium">Copy #{copy.copy_number}</p>
+                        <span className="px-2 py-1 bg-success-50 text-success-700 text-xs rounded-full">
                           {copy.status}
                         </span>
                       </div>
@@ -542,7 +542,7 @@ function CheckoutBooks() {
                         </p>
                         {copy.location && (
                           <p className="text-gray-400">
-                            <span className="text-gray-500">Location:</span> <span className="text-primary-400 font-medium">{copy.location}</span>
+                            <span className="text-gray-500">Location:</span> <span className="text-primary-600 font-medium">{copy.location}</span>
                           </p>
                         )}
                         {copy.notes && (
@@ -566,7 +566,7 @@ function CheckoutBooks() {
       {/* Step 3: Select Borrower */}
       {step === 3 && !showNewBorrowerForm && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">Select Borrower</h2>
+          <h2 className="text-xl font-semibold text-ink mb-4">Select Borrower</h2>
           <div className="relative mb-4">
             <input
               type="text"
@@ -576,14 +576,14 @@ function CheckoutBooks() {
               className="w-full px-4 py-2"
             />
             {borrowerSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 max-h-60 overflow-y-auto">
+              <div className="absolute z-10 w-full bg-gray-50 border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto">
                 {borrowerSuggestions.map((borrower) => (
                   <div
                     key={borrower.id}
                     onClick={() => selectBorrower(borrower)}
-                    className="px-4 py-3 hover:bg-gray-600 cursor-pointer"
+                    className="px-4 py-3 hover:bg-gray-200 cursor-pointer"
                   >
-                    <p className="text-white font-medium">{borrower.first_name}</p>
+                    <p className="text-ink font-medium">{borrower.first_name}</p>
                     <p className="text-gray-400 text-sm">ID: {borrower.borrower_id}</p>
                   </div>
                 ))}
@@ -592,16 +592,16 @@ function CheckoutBooks() {
           </div>
 
           {selectedBorrower && (
-            <div className="bg-gray-700 rounded-lg p-4 mb-4">
-              <h3 className="text-white font-semibold mb-2">Selected Borrower</h3>
-              <p className="text-white">{selectedBorrower.first_name}</p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h3 className="text-ink font-semibold mb-2">Selected Borrower</h3>
+              <p className="text-ink">{selectedBorrower.first_name}</p>
               <p className="text-gray-400 text-sm">ID: {selectedBorrower.borrower_id}</p>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Due in (days)</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Due in (days)</label>
               <input
                 type="number"
                 value={checkoutData.due_days}
@@ -610,7 +610,7 @@ function CheckoutBooks() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Notes</label>
               <textarea
                 value={checkoutData.notes}
                 onChange={(e) => setCheckoutData({...checkoutData, notes: e.target.value})}
@@ -642,10 +642,10 @@ function CheckoutBooks() {
       {/* New Borrower Form */}
       {showNewBorrowerForm && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">New Borrower</h2>
+          <h2 className="text-xl font-semibold text-ink mb-4">New Borrower</h2>
           <form onSubmit={handleCreateBorrower} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">First Name *</label>
               <input
                 type="text"
                 value={newBorrowerData.first_name}
@@ -654,7 +654,7 @@ function CheckoutBooks() {
                 className="w-full px-4 py-2"
               />
             </div>
-            <div className="bg-gray-700 p-3 rounded-lg">
+            <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm text-gray-400">
                 A unique borrower ID will be automatically generated when you create this borrower.
               </p>
@@ -671,7 +671,7 @@ function CheckoutBooks() {
       {showBookConfirmModal && scannedBookData && (
         <div className="modal-overlay" onClick={cancelBookConfirm}>
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-6">Confirm Book</h2>
+            <h2 className="text-2xl font-bold text-ink mb-6">Confirm Book</h2>
 
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
               {/* Book Cover */}
@@ -680,7 +680,7 @@ function CheckoutBooks() {
                   <img
                     src={scannedBookData.book.cover_large || scannedBookData.book.cover_medium}
                     alt={scannedBookData.book.title}
-                    className="w-32 sm:w-40 h-auto rounded-lg shadow-xl border-2 border-primary-500"
+                    className="w-32 sm:w-40 h-auto rounded-lg shadow-xl border-2 border-primary-600"
                     onError={(e) => e.target.style.display = 'none'}
                   />
                 </div>
@@ -688,13 +688,13 @@ function CheckoutBooks() {
 
               {/* Book Details */}
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-2">{scannedBookData.book.title}</h3>
-                <p className="text-lg text-gray-300 mb-4">by {scannedBookData.book.author}</p>
+                <h3 className="text-2xl font-bold text-ink mb-2">{scannedBookData.book.title}</h3>
+                <p className="text-lg text-gray-600 mb-4">by {scannedBookData.book.author}</p>
 
                 <div className="space-y-2 text-gray-400">
                   {scannedBookData.book.publish_year && (
                     <p className="text-lg">
-                      <span className="text-gray-500">Year:</span> <span className="text-white font-semibold">{scannedBookData.book.publish_year}</span>
+                      <span className="text-gray-500">Year:</span> <span className="text-ink font-semibold">{scannedBookData.book.publish_year}</span>
                     </p>
                   )}
                   {scannedBookData.book.isbn && (
@@ -705,7 +705,7 @@ function CheckoutBooks() {
                   )}
                   <p>
                     <span className="text-gray-500">Available Copies:</span>{' '}
-                    <span className={scannedBookData.availableCopies.length > 0 ? 'text-success-400 font-semibold' : 'text-warning-400 font-semibold'}>
+                    <span className={scannedBookData.availableCopies.length > 0 ? 'text-success-600 font-semibold' : 'text-warning-600 font-semibold'}>
                       {scannedBookData.availableCopies.length}
                     </span>
                     {' '}of {scannedBookData.book.total_copies}
@@ -716,42 +716,42 @@ function CheckoutBooks() {
 
             {/* Show checked out copies info if no copies available */}
             {scannedBookData.availableCopies.length === 0 && scannedBookData.book.total_copies > 0 && (
-              <div className="mb-6 bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+              <div className="mb-6 bg-primary-50 border border-primary-300 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-blue-100 mb-2">All Copies Currently Borrowed</h4>
+                    <h4 className="font-semibold text-primary-800 mb-2">All Copies Currently Borrowed</h4>
                     <div className="space-y-2 text-sm">
                       {scannedBookData.book.copies?.filter(c => c.status === 'Checked Out').map((copy) => {
                         const daysSince = copy.checkout_info?.checkout_date ? getDaysSinceCheckout(copy.checkout_info.checkout_date) : null
                         const dueStatus = copy.checkout_info?.due_date ? getDueStatus(copy.checkout_info.due_date) : null
 
                         return (
-                          <div key={copy.id} className="bg-blue-900/40 border border-blue-500/30 rounded-lg p-2 text-sm">
-                            <span className="font-semibold text-blue-100">Copy #{copy.copy_number}</span>
+                          <div key={copy.id} className="bg-primary-50 border border-primary-200 rounded-lg p-2 text-sm">
+                            <span className="font-semibold text-primary-800">Copy #{copy.copy_number}</span>
                             {copy.checkout_info && (
                               <div className="mt-1 space-y-0.5">
                                 <div>
-                                  <span className="text-blue-300">Borrower:</span>{' '}
-                                  <span className="text-white font-semibold">{copy.checkout_info.borrower_name}</span>
+                                  <span className="text-primary-700">Borrower:</span>{' '}
+                                  <span className="text-ink font-semibold">{copy.checkout_info.borrower_name}</span>
                                   {' '}
-                                  <span className="font-mono text-primary-400">({copy.checkout_info.borrower_id})</span>
+                                  <span className="font-mono text-primary-600">({copy.checkout_info.borrower_id})</span>
                                 </div>
                                 {daysSince && (
                                   <div>
-                                    <span className="text-blue-300">Borrowed for:</span>{' '}
-                                    <span className="text-white font-semibold">{daysSince} day{daysSince !== 1 ? 's' : ''}</span>
+                                    <span className="text-primary-700">Borrowed for:</span>{' '}
+                                    <span className="text-ink font-semibold">{daysSince} day{daysSince !== 1 ? 's' : ''}</span>
                                   </div>
                                 )}
                                 {dueStatus && (
                                   <div>
-                                    <span className="text-blue-300">Status:</span>{' '}
+                                    <span className="text-primary-700">Status:</span>{' '}
                                     <span className={`font-semibold ${
-                                      dueStatus.status === 'overdue' ? 'text-red-400' :
-                                      dueStatus.status === 'due-today' ? 'text-warning-400' :
-                                      'text-success-400'
+                                      dueStatus.status === 'overdue' ? 'text-danger-600' :
+                                      dueStatus.status === 'due-today' ? 'text-warning-600' :
+                                      'text-success-600'
                                     }`}>
                                       {dueStatus.text}
                                       {dueStatus.status === 'overdue' && ' ⚠️'}
@@ -766,10 +766,10 @@ function CheckoutBooks() {
                     </div>
 
                     {/* Link to Borrowed Books filtered to this book */}
-                    <div className="mt-3 pt-3 border-t border-blue-500/30">
+                    <div className="mt-3 pt-3 border-t border-primary-200">
                       <Link
                         to={`/checked-out?search=${encodeURIComponent(scannedBookData.book.title || '')}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-700/50 hover:bg-blue-600/60 text-blue-100 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-100 hover:bg-primary-200 text-primary-800 hover:text-ink rounded-lg text-sm font-medium transition-all duration-200 border border-primary-300 hover:border-primary-400"
                         onClick={cancelBookConfirm}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,30 +801,30 @@ function CheckoutBooks() {
           <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Checkout Successful!</h2>
+              <h2 className="text-2xl font-bold text-ink mb-2">Checkout Successful!</h2>
               <p className="text-gray-400">Book has been borrowed successfully</p>
             </div>
 
-            <div className="bg-gray-700 rounded-lg p-6 space-y-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-6 space-y-4 mb-6">
               <div>
                 <h3 className="text-sm font-medium text-gray-400 mb-1">Book</h3>
-                <p className="text-lg font-semibold text-white">{checkoutResult.book.title}</p>
-                <p className="text-gray-300">Copy #{checkoutResult.copy.copy_number}</p>
+                <p className="text-lg font-semibold text-ink">{checkoutResult.book.title}</p>
+                <p className="text-gray-600">Copy #{checkoutResult.copy.copy_number}</p>
               </div>
 
-              <div className="border-t border-gray-600 pt-4">
+              <div className="border-t border-gray-300 pt-4">
                 <h3 className="text-sm font-medium text-gray-400 mb-1">Borrower</h3>
-                <p className="text-lg font-semibold text-white">{checkoutResult.borrower.first_name}</p>
-                <p className="text-primary-400 font-mono">ID: {checkoutResult.borrower.borrower_id}</p>
+                <p className="text-lg font-semibold text-ink">{checkoutResult.borrower.first_name}</p>
+                <p className="text-primary-600 font-mono">ID: {checkoutResult.borrower.borrower_id}</p>
               </div>
 
-              <div className="border-t border-gray-600 pt-4">
+              <div className="border-t border-gray-300 pt-4">
                 <h3 className="text-sm font-medium text-gray-400 mb-1">Due Date</h3>
-                <p className="text-lg font-semibold text-warning-400">{checkoutResult.dueDate}</p>
+                <p className="text-lg font-semibold text-warning-600">{checkoutResult.dueDate}</p>
               </div>
             </div>
 
