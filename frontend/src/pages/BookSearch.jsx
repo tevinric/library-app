@@ -277,14 +277,14 @@ function BookSearch() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Book Search</h1>
+        <h1 className="text-3xl font-bold text-ink">Book Search</h1>
         <p className="text-gray-400 mt-1">Search for books and check availability</p>
       </div>
 
       {/* Barcode Scanner */}
       {showBarcodeScanner && (
         <div className="card">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-600 mb-2">
             Quick Search: Scan Barcode
           </label>
           <BarcodeScanner
@@ -301,7 +301,7 @@ function BookSearch() {
 
       {/* Search Bar */}
       <div className="card">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-600 mb-2">
           {showBarcodeScanner ? 'Or search manually' : 'Search Books'}
         </label>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -346,29 +346,29 @@ function BookSearch() {
       {/* Results */}
       {books.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             {books.length} book{books.length !== 1 ? 's' : ''} found
           </h2>
           <div className="space-y-4">
             {books.map((book) => (
-              <div key={book.id} className="bg-gray-700 rounded-lg p-4">
+              <div key={book.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex gap-4 items-start mb-3">
                   {/* Book Cover Thumbnail */}
                   {book.cover_small || book.cover_medium ? (
                     <img
                       src={book.cover_small || book.cover_medium}
                       alt={book.title}
-                      className="w-20 h-auto rounded-lg shadow-lg border border-gray-600 flex-shrink-0"
+                      className="w-20 h-auto rounded-lg shadow-lg border border-gray-300 flex-shrink-0"
                       onError={(e) => e.target.style.display = 'none'}
                     />
                   ) : (
-                    <div className="w-20 h-28 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-500">
+                    <div className="w-20 h-28 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-400">
                       <BookIcon className="w-8 h-8 text-gray-400" />
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white">{book.title}</h3>
+                    <h3 className="text-lg font-semibold text-ink">{book.title}</h3>
                     <p className="text-gray-400">by {book.author}</p>
                     <div className="mt-2 space-y-1">
                       {book.isbn && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">ISBN:</span> {book.isbn}</p>}
@@ -378,11 +378,11 @@ function BookSearch() {
                       {book.language && book.language !== 'English' && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Language:</span> {book.language}</p>}
                       {book.pages && <p className="text-sm text-gray-500"><span className="text-gray-600 font-medium">Pages:</span> {book.pages}</p>}
                     </div>
-                    {book.genre && <span className="inline-block px-2 py-1 bg-primary-900/50 text-primary-300 text-xs rounded mt-2">{book.genre}</span>}
+                    {book.genre && <span className="inline-block px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded mt-2">{book.genre}</span>}
                   </div>
 
                   <div className="text-right flex-shrink-0">
-                    <p className="text-2xl font-bold text-success-400">{book.available_copies}</p>
+                    <p className="text-2xl font-bold text-success-600">{book.available_copies}</p>
                     <p className="text-sm text-gray-400">of {book.total_copies} available</p>
                   </div>
                 </div>
@@ -422,11 +422,11 @@ function BookSearch() {
 
                 {/* Copies List */}
                 {selectedBookId === book.id && (
-                  <div className="mt-4 border-t border-gray-600 pt-4">
-                    <h4 className="font-semibold text-white mb-3">
+                  <div className="mt-4 border-t border-gray-300 pt-4">
+                    <h4 className="font-semibold text-ink mb-3">
                       Copies ({copies.length})
                       {copies.filter(c => c.status === 'Available').length > 0 && (
-                        <span className="ml-2 text-sm text-success-400">
+                        <span className="ml-2 text-sm text-success-600">
                           • {copies.filter(c => c.status === 'Available').length} Available
                         </span>
                       )}
@@ -436,15 +436,15 @@ function BookSearch() {
                     ) : (
                       <div className="space-y-2">
                         {copies.map((copy) => (
-                          <div key={copy.id} className="bg-gray-800 p-4 rounded-lg">
+                          <div key={copy.id} className="bg-white p-4 rounded-lg">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-white font-medium">Copy #{copy.copy_number}</span>
+                                  <span className="text-ink font-medium">Copy #{copy.copy_number}</span>
                                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                     copy.status === 'Available'
-                                      ? 'bg-success-900/50 text-success-300'
-                                      : 'bg-warning-900/50 text-warning-300'
+                                      ? 'bg-success-50 text-success-700'
+                                      : 'bg-warning-50 text-warning-700'
                                   }`}>
                                     {copy.status}
                                   </span>
@@ -463,7 +463,7 @@ function BookSearch() {
                                         <select
                                           value={editCopyData.condition}
                                           onChange={(e) => setEditCopyData({...editCopyData, condition: e.target.value})}
-                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-ink text-sm"
                                         >
                                           <option value="Excellent">Excellent</option>
                                           <option value="Good">Good</option>
@@ -480,7 +480,7 @@ function BookSearch() {
                                           value={editCopyData.location}
                                           onChange={(e) => setEditCopyData({...editCopyData, location: e.target.value})}
                                           placeholder="e.g., Shelf A3, Room 101"
-                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-ink text-sm"
                                         />
                                       </div>
 
@@ -492,7 +492,7 @@ function BookSearch() {
                                           onChange={(e) => setEditCopyData({...editCopyData, notes: e.target.value})}
                                           placeholder="Any additional notes about this copy"
                                           rows="2"
-                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+                                          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-ink text-sm"
                                         />
                                       </div>
 
@@ -524,7 +524,7 @@ function BookSearch() {
                                       <p className="text-gray-400 text-sm">
                                         <span className="text-gray-500">📍 Location:</span>{' '}
                                         {copy.location ? (
-                                          <span className="text-primary-400 font-medium">{copy.location}</span>
+                                          <span className="text-primary-600 font-medium">{copy.location}</span>
                                         ) : (
                                           <span className="text-gray-500 italic">No location set</span>
                                         )}
@@ -550,7 +550,7 @@ function BookSearch() {
                               {copy.checkout_info && (
                                 <button
                                   onClick={() => showCheckoutDetails(copy.checkout_info)}
-                                  className="text-primary-400 hover:text-primary-300 text-sm underline ml-4"
+                                  className="text-primary-600 hover:text-primary-700 text-sm underline ml-4"
                                 >
                                   View Checkout Details
                                 </button>
@@ -580,14 +580,14 @@ function BookSearch() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-white">Edit Book Details</h2>
+                <h2 className="text-2xl font-bold text-ink">Edit Book Details</h2>
                 <p className="text-sm text-gray-400 mt-1">Verify book cover matches physical book</p>
               </div>
               {editBookData.cover_large && (
                 <img
                   src={editBookData.cover_large}
                   alt={editBookData.title}
-                  className="w-32 h-auto rounded-lg shadow-2xl border-2 border-primary-500"
+                  className="w-32 h-auto rounded-lg shadow-2xl border-2 border-primary-600"
                   onError={(e) => e.target.style.display = 'none'}
                 />
               )}
@@ -595,7 +595,7 @@ function BookSearch() {
             <form onSubmit={handleUpdateBook} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Title *</label>
                   <input
                     type="text"
                     value={editBookData.title}
@@ -605,7 +605,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Author *</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Author *</label>
                   <input
                     type="text"
                     value={editBookData.author}
@@ -615,7 +615,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">ISBN</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">ISBN</label>
                   <input
                     type="text"
                     value={editBookData.isbn}
@@ -624,7 +624,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Publisher</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Publisher</label>
                   <input
                     type="text"
                     value={editBookData.publisher}
@@ -633,7 +633,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Publication Year</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Publication Year</label>
                   <input
                     type="number"
                     value={editBookData.publication_year}
@@ -642,7 +642,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Genre</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Genre</label>
                   <input
                     type="text"
                     value={editBookData.genre}
@@ -651,7 +651,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Language</label>
                   <input
                     type="text"
                     value={editBookData.language}
@@ -660,7 +660,7 @@ function BookSearch() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Pages</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Pages</label>
                   <input
                     type="number"
                     value={editBookData.pages}
@@ -670,7 +670,7 @@ function BookSearch() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Description</label>
                 <textarea
                   value={editBookData.description}
                   onChange={(e) => setEditBookData({...editBookData, description: e.target.value})}
@@ -695,10 +695,10 @@ function BookSearch() {
       {showAddCopyModal && (
         <div className="modal-overlay" onClick={() => setShowAddCopyModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">Add Copy of "{selectedBook?.title}"</h2>
+            <h2 className="text-2xl font-bold text-ink mb-4">Add Copy of "{selectedBook?.title}"</h2>
             <form onSubmit={handleCreateCopy} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Condition</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Condition</label>
                 <select
                   value={newCopyData.condition}
                   onChange={(e) => setNewCopyData({...newCopyData, condition: e.target.value})}
@@ -711,7 +711,7 @@ function BookSearch() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Location</label>
                 <input
                   type="text"
                   value={newCopyData.location}
@@ -721,7 +721,7 @@ function BookSearch() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Notes</label>
                 <textarea
                   value={newCopyData.notes}
                   onChange={(e) => setNewCopyData({...newCopyData, notes: e.target.value})}
@@ -747,10 +747,10 @@ function BookSearch() {
       {showWishlistModal && (
         <div className="modal-overlay" onClick={() => setShowWishlistModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">Add to Wishlist</h2>
+            <h2 className="text-2xl font-bold text-ink mb-4">Add to Wishlist</h2>
             <form onSubmit={handleAddToWishlist} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Title *</label>
                 <input
                   type="text"
                   value={wishlistData.title}
@@ -760,7 +760,7 @@ function BookSearch() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Author</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Author</label>
                 <input
                   type="text"
                   value={wishlistData.author}
@@ -769,7 +769,7 @@ function BookSearch() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">ISBN</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">ISBN</label>
                 <input
                   type="text"
                   value={wishlistData.isbn}
@@ -778,7 +778,7 @@ function BookSearch() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Requested By</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Requested By</label>
                 <input
                   type="text"
                   value={wishlistData.requested_by}
@@ -787,7 +787,7 @@ function BookSearch() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Priority</label>
                 <select
                   value={wishlistData.priority}
                   onChange={(e) => setWishlistData({...wishlistData, priority: e.target.value})}
@@ -799,7 +799,7 @@ function BookSearch() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Notes</label>
                 <textarea
                   value={wishlistData.request_notes}
                   onChange={(e) => setWishlistData({...wishlistData, request_notes: e.target.value})}
@@ -820,10 +820,10 @@ function BookSearch() {
       {showDeleteConfirmModal && bookToDelete && (
         <div className="modal-overlay" onClick={() => { setShowDeleteConfirmModal(false); setBookToDelete(null) }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold text-white mb-2">Delete Book</h2>
-            <p className="text-gray-300 mb-1">Are you sure you want to delete:</p>
-            <p className="text-white font-semibold mb-4">"{bookToDelete.title}"</p>
-            <p className="text-danger-300 text-sm mb-6">
+            <h2 className="text-xl font-bold text-ink mb-2">Delete Book</h2>
+            <p className="text-gray-600 mb-1">Are you sure you want to delete:</p>
+            <p className="text-ink font-semibold mb-4">"{bookToDelete.title}"</p>
+            <p className="text-danger-700 text-sm mb-6">
               ⚠️ This will permanently remove the book and all its copies from the system. This action cannot be undone.
             </p>
             <div className="flex gap-3">
@@ -850,25 +850,25 @@ function BookSearch() {
       {showCheckoutModal && selectedCheckout && (
         <div className="modal-overlay" onClick={() => setShowCheckoutModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-white mb-4">Checkout Details</h2>
+            <h2 className="text-2xl font-bold text-ink mb-4">Checkout Details</h2>
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-400">Borrowed By</p>
-                <p className="text-white font-medium">{selectedCheckout.borrower_name}</p>
+                <p className="text-ink font-medium">{selectedCheckout.borrower_name}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Email</p>
-                <p className="text-white">{selectedCheckout.borrower_email}</p>
+                <p className="text-ink">{selectedCheckout.borrower_email}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Borrowed</p>
-                <p className="text-white">
+                <p className="text-ink">
                   {formatDistanceToNow(new Date(selectedCheckout.checkout_date), { addSuffix: true })}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Due Date</p>
-                <p className="text-white">
+                <p className="text-ink">
                   {new Date(selectedCheckout.due_date).toLocaleDateString()}
                 </p>
               </div>

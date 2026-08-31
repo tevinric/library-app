@@ -6,18 +6,22 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
+        ink: '#16181d',
         primary: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
+          50: '#eef4fc',
+          100: '#d7e6f8',
+          200: '#b0cdf2',
+          300: '#7fabe8',
+          400: '#4c85dc',
+          500: '#2563c9',
+          600: '#0049ad',
+          700: '#003a8a',
+          800: '#002d6b',
+          900: '#001f4d',
         },
         success: {
           50: '#f0fdf4',

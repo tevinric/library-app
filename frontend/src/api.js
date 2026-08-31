@@ -33,8 +33,12 @@ api.interceptors.response.use(
 
 // Public books (no auth required)
 const publicBaseURL = import.meta.env.PROD ? '' : (import.meta.env.VITE_ZOELIBRARYAPP_API_URL || 'http://localhost:5002')
-export const getPublicBooks = (search = '') =>
-  axios.get(`${publicBaseURL}/api/public/books`, { params: { search } })
+export const getPublicBooks = ({ search = '', genre = '', availableOnly = false } = {}) =>
+  axios.get(`${publicBaseURL}/api/public/books`, { params: { search, genre, available_only: availableOnly } })
+export const getPublicBookDetail = (id) =>
+  axios.get(`${publicBaseURL}/api/public/books/${id}`)
+export const getPublicGenres = () =>
+  axios.get(`${publicBaseURL}/api/public/genres`)
 
 // Health check
 export const healthCheck = () => api.get('/api/health')
@@ -80,13 +84,26 @@ export const updateWishlistItem = (id, data) => api.put(`/api/wishlist/${id}`, d
 export const deleteWishlistItem = (id) => api.delete(`/api/wishlist/${id}`)
 
 // Follow-ups
-export const getFollowUps = () => api.get('/api/follow-ups')
+export const getFollowUps = (view = 'active') => api.get('/api/follow-ups', { params: { view } })
 export const createFollowUp = (data) => api.post('/api/follow-ups', data)
 export const updateFollowUp = (id, data) => api.put(`/api/follow-ups/${id}`, data)
 export const deleteFollowUp = (id) => api.delete(`/api/follow-ups/${id}`)
 
 // Dashboard Stats
 export const getDashboardStats = () => api.get('/api/dashboard/stats')
+
+// Settings
+export const getSettings = () => api.get('/api/settings')
+export const updateSettings = (data) => api.put('/api/settings', data)
+
+// Overdue Books + Fines (unified — see OverdueBooks.jsx)
+export const getOverdueActive = () => api.get('/api/overdue/active')
+
+// Fines
+export const getFines = () => api.get('/api/fines')
+export const settleFines = (fineIds) => api.post('/api/fines/settle', { fine_ids: fineIds })
+export const unpayFine = (id) => api.put(`/api/fines/${id}/unpay`)
+export const getFineTransactions = () => api.get('/api/fines/transactions')
 
 // =============================================================================
 // OPENLIBRARY API INTEGRATION
