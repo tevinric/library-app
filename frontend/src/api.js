@@ -5,11 +5,24 @@ const api = axios.create({
   baseURL: import.meta.env.PROD ? '' : (import.meta.env.VITE_ZOELIBRARYAPP_API_URL || 'http://localhost:5002'),
 })
 
-// Request interceptor to add auth header
+// Request interceptor to add auth header.
+// DEV mode (see App.jsx) never talks to Entra, so it has no access token —
+// it identifies itself the old way, but only because the backend's own
+// ZOELIBRARYAPP_AUTH_DEV_BYPASS must also be explicitly on for that header
+// to be trusted. In PROD, the only thing sent is the verified bearer token.
+const isDevMode = import.meta.env.VITE_ZOELIBRARYAPP_ENV_TYPE === 'DEV'
+
 api.interceptors.request.use((config) => {
-  const userEmail = localStorage.getItem('userEmail')
-  if (userEmail) {
-    config.headers['X-User-Email'] = userEmail
+  if (isDevMode) {
+    const userEmail = localStorage.getItem('userEmail')
+    if (userEmail) {
+      config.headers['X-User-Email'] = userEmail
+    }
+  } else {
+    const accessToken = localStorage.getItem('accessToken')
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`
+    }
   }
   return config
 })

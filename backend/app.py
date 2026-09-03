@@ -7,6 +7,8 @@ import psycopg2.errors
 from psycopg2.extras import RealDictCursor
 import os
 from dotenv import load_dotenv
+import jwt
+from jwt import PyJWKClient
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -189,20 +191,120 @@ def sync_overdue_fines(cur, user_id):
     ''', (str(user_id), rate, rate))
 
 # =============================================================================
-# AUTHENTICATION DECORATORS
+# AUTHENTICATION — Microsoft Entra ID token verification
 # =============================================================================
+# The frontend sends the access token MSAL acquired for this API as
+# `Authorization: Bearer <token>`. We verify it here — signature, issuer,
+# audience, expiry — before trusting anything in it. This is the part that
+# actually stops a caller from just claiming to be someone else; a header
+# the client sets itself (the old X-User-Email approach) proves nothing.
+#
+# WHO is allowed to sign in at all is enforced by Entra ID itself: the
+# Enterprise Application's "Assignment required = Yes" setting plus its
+# assigned users list. There are no App Roles or groups configured, so this
+# decorator does not do a second, in-app allow-list check — a token that
+# verifies here already means Entra let that specific user through.
+AZURE_TENANT_ID = os.getenv('ZOELIBRARYAPP_AZURE_TENANT_ID')
+AZURE_CLIENT_ID = os.getenv('ZOELIBRARYAPP_AZURE_CLIENT_ID')
+
+# Local-only escape hatch for running without an Entra app registration.
+# Must be unset/false anywhere the backend is reachable outside your own
+# machine — with it on, ANY caller can set X-User-Email and impersonate
+# anyone, exactly like the vulnerability this replaces.
+AUTH_DEV_BYPASS = os.getenv('ZOELIBRARYAPP_AUTH_DEV_BYPASS', 'false').strip().lower() == 'true'
+
+_jwks_client = PyJWKClient(
+    f'https://login.microsoftonline.com/{AZURE_TENANT_ID}/discovery/v2.0/keys'
+) if AZURE_TENANT_ID else None
+
+# Entra issues v1-format tokens (sts.windows.net) or v2-format
+# (login.microsoftonline.com/.../v2.0) depending on the app registration's
+# `requestedAccessTokenVersion`. Both are genuine Entra issuers and both pin
+# THIS tenant's GUID, so accept either rather than depending on a portal
+# setting staying put.
+_EXPECTED_ISSUERS = {
+    f'https://login.microsoftonline.com/{AZURE_TENANT_ID}/v2.0',
+    f'https://sts.windows.net/{AZURE_TENANT_ID}/',
+} if AZURE_TENANT_ID else set()
+# Entra puts either the app's GUID or its api:// URI in `aud` depending on
+# how the token was requested — accept either.
+_EXPECTED_AUDIENCES = [AZURE_CLIENT_ID, f'api://{AZURE_CLIENT_ID}'] if AZURE_CLIENT_ID else []
+
+if not AUTH_DEV_BYPASS and not (AZURE_TENANT_ID and AZURE_CLIENT_ID):
+    raise RuntimeError(
+        'ZOELIBRARYAPP_AZURE_TENANT_ID / ZOELIBRARYAPP_AZURE_CLIENT_ID must be set '
+        '(or ZOELIBRARYAPP_AUTH_DEV_BYPASS=true for local dev only).'
+    )
+
+
+def _verify_entra_token(token):
+    """Verify a Microsoft Entra ID access token. Raises on any failure.
+    Returns the decoded claims on success."""
+    signing_key = _jwks_client.get_signing_key_from_jwt(token)
+    try:
+        claims = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=['RS256'],
+            audience=_EXPECTED_AUDIENCES,
+        )
+    except jwt.InvalidAudienceError:
+        # Signature already checked out above — Entra did sign this token, it
+        # just isn't addressed to us. Log what it actually carries so a config
+        # mismatch is a one-line diagnosis instead of a guessing game; aud is
+        # an endpoint identifier, not a secret, so this is safe to log.
+        unverified = jwt.decode(token, options={'verify_signature': False})
+        logger.warning(
+            "aud mismatch — token has aud=%r; expected one of %r",
+            unverified.get('aud'), _EXPECTED_AUDIENCES
+        )
+        raise
+
+    # Checked here rather than via jwt.decode(issuer=...) because that
+    # parameter takes a single string on PyJWT 2.8, and we accept two.
+    issuer = claims.get('iss')
+    if issuer not in _EXPECTED_ISSUERS:
+        logger.warning(
+            "iss mismatch — token has iss=%r; expected one of %r",
+            issuer, _EXPECTED_ISSUERS
+        )
+        raise jwt.InvalidIssuerError(f'Untrusted token issuer: {issuer}')
+
+    # Confirms this token was actually issued for our API's scope, not
+    # merely some other token that happens to share the same audience.
+    if 'access_as_user' not in claims.get('scp', '').split():
+        raise jwt.InvalidTokenError('Token missing expected scope: access_as_user')
+    return claims
+
 
 def token_required(f):
     """
-    Simple authentication decorator using X-User-Email header.
-    Creates user if not exists. Sets g.user_id and g.user_email.
+    Authenticates requests using a verified Microsoft Entra ID access token.
+    Creates the local user record if not seen before. Sets g.user_id and
+    g.user_email from the token's own claims — never from client input.
     """
     @wraps(f)
     def decorated(*args, **kwargs):
-        email = request.headers.get('X-User-Email')
+        if AUTH_DEV_BYPASS:
+            email = request.headers.get('X-User-Email')
+            if not email:
+                return jsonify({'error': 'Authentication required'}), 401
+        else:
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Authentication required'}), 401
 
-        if not email:
-            return jsonify({'error': 'Authentication required'}), 401
+            token = auth_header[len('Bearer '):].strip()
+            try:
+                claims = _verify_entra_token(token)
+            except Exception as e:
+                logger.warning(f"Token verification failed: {str(e)}")
+                return jsonify({'error': 'Invalid or expired token'}), 401
+
+            email = claims.get('preferred_username') or claims.get('upn') or claims.get('email')
+            if not email:
+                logger.warning("Verified token has no usable identity claim")
+                return jsonify({'error': 'Token missing user identity'}), 401
 
         try:
             conn = get_db_connection()
