@@ -280,6 +280,14 @@ line resolves most of this table immediately.
       history; a public/anonymous endpoint's query is checked column-by-column
       for anything that shouldn't be exposed pre-login
 
+## Related skills
+
+This skill covers authentication specifically. `security-baseline` covers the
+surrounding posture (SQL, secrets, PII, public endpoints, fail-closed
+defaults) and carries the pre-ship review checklist. `app-architecture` is the
+entry point for building a new app in this house style, and names the build
+order that puts auth in at step 5 rather than bolting it on at the end.
+
 ## Reference implementation
 
 `library-app` is a worked example of this whole pattern, including the
