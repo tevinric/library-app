@@ -13,6 +13,7 @@ function CheckoutBooks() {
   const [selectedCopy, setSelectedCopy] = useState(null)
   const [borrowerSearch, setBorrowerSearch] = useState('')
   const [borrowerSuggestions, setBorrowerSuggestions] = useState([])
+  const [borrowerDropdownOpen, setBorrowerDropdownOpen] = useState(false)
   const [selectedBorrower, setSelectedBorrower] = useState(null)
   const [showNewBorrowerForm, setShowNewBorrowerForm] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(true)
@@ -22,21 +23,20 @@ function CheckoutBooks() {
     due_days: 14,
     notes: ''
   })
-  const [newBorrowerData, setNewBorrowerData] = useState({
-    first_name: ''
-  })
   const [showBookConfirmModal, setShowBookConfirmModal] = useState(false)
   const [scannedBookData, setScannedBookData] = useState(null)
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [checkoutResult, setCheckoutResult] = useState(null)
 
   useEffect(() => {
-    if (borrowerSearch.length > 1) {
+    // While the dropdown is open, an empty search shows all borrowers
+    // (up to the backend's cap) and narrows as the user types.
+    if (borrowerDropdownOpen) {
       searchBorrowers()
     } else {
       setBorrowerSuggestions([])
     }
-  }, [borrowerSearch])
+  }, [borrowerSearch, borrowerDropdownOpen])
 
   useEffect(() => {
     getSettings()
@@ -178,8 +178,9 @@ function CheckoutBooks() {
 
   const selectBorrower = (borrower) => {
     setSelectedBorrower(borrower)
-    setBorrowerSearch(`${borrower.first_name} (${borrower.borrower_id})`)
+    setBorrowerSearch(borrower.borrower_id)
     setBorrowerSuggestions([])
+    setBorrowerDropdownOpen(false)
   }
 
   const handleDeleteBook = async (bookId) => {
@@ -210,11 +211,10 @@ function CheckoutBooks() {
     }
   }
 
-  const handleCreateBorrower = async (e) => {
-    e.preventDefault()
+  const handleCreateBorrower = async () => {
     try {
       setLoading(true)
-      const response = await createBorrower(newBorrowerData)
+      const response = await createBorrower()
       setSelectedBorrower(response.data)
       setShowNewBorrowerForm(false)
       alert('Borrower created successfully!')
@@ -572,10 +572,12 @@ function CheckoutBooks() {
               type="text"
               value={borrowerSearch}
               onChange={(e) => setBorrowerSearch(e.target.value)}
-              placeholder="Start typing borrower name..."
+              onFocus={() => setBorrowerDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setBorrowerDropdownOpen(false), 150)}
+              placeholder="Click to select a borrower, or start typing borrower ID..."
               className="w-full px-4 py-2"
             />
-            {borrowerSuggestions.length > 0 && (
+            {borrowerDropdownOpen && borrowerSuggestions.length > 0 && (
               <div className="absolute z-10 w-full bg-gray-50 border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto">
                 {borrowerSuggestions.map((borrower) => (
                   <div
@@ -583,8 +585,7 @@ function CheckoutBooks() {
                     onClick={() => selectBorrower(borrower)}
                     className="px-4 py-3 hover:bg-gray-200 cursor-pointer"
                   >
-                    <p className="text-ink font-medium">{borrower.first_name}</p>
-                    <p className="text-gray-400 text-sm">ID: {borrower.borrower_id}</p>
+                    <p className="text-ink font-medium">ID: {borrower.borrower_id}</p>
                   </div>
                 ))}
               </div>
@@ -594,7 +595,6 @@ function CheckoutBooks() {
           {selectedBorrower && (
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <h3 className="text-ink font-semibold mb-2">Selected Borrower</h3>
-              <p className="text-ink">{selectedBorrower.first_name}</p>
               <p className="text-gray-400 text-sm">ID: {selectedBorrower.borrower_id}</p>
             </div>
           )}
@@ -643,27 +643,17 @@ function CheckoutBooks() {
       {showNewBorrowerForm && (
         <div className="card">
           <h2 className="text-xl font-semibold text-ink mb-4">New Borrower</h2>
-          <form onSubmit={handleCreateBorrower} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">First Name *</label>
-              <input
-                type="text"
-                value={newBorrowerData.first_name}
-                onChange={(e) => setNewBorrowerData({...newBorrowerData, first_name: e.target.value})}
-                required
-                className="w-full px-4 py-2"
-              />
-            </div>
+          <div className="space-y-4">
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm text-gray-400">
-                A unique borrower ID will be automatically generated when you create this borrower.
+                No personal details are collected. A unique borrower ID will be automatically generated and used to track this borrower's activity.
               </p>
             </div>
             <div className="flex gap-4">
-              <button type="submit" disabled={loading} className="btn-primary">Create Borrower</button>
+              <button onClick={handleCreateBorrower} disabled={loading} className="btn-primary">Create Borrower</button>
               <button type="button" onClick={() => setShowNewBorrowerForm(false)} className="btn-secondary">Cancel</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
@@ -818,7 +808,6 @@ function CheckoutBooks() {
 
               <div className="border-t border-gray-300 pt-4">
                 <h3 className="text-sm font-medium text-gray-400 mb-1">Borrower</h3>
-                <p className="text-lg font-semibold text-ink">{checkoutResult.borrower.first_name}</p>
                 <p className="text-primary-600 font-mono">ID: {checkoutResult.borrower.borrower_id}</p>
               </div>
 

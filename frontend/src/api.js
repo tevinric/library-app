@@ -64,8 +64,7 @@ export const deleteBookCopy = (id) => api.delete(`/api/book-copies/${id}`)
 export const getBorrowers = (search = '') => api.get('/api/borrowers', { params: { search } })
 export const getBorrower = (id) => api.get(`/api/borrowers/${id}`)
 export const autocompleteBorrowers = (query) => api.get('/api/borrowers/autocomplete', { params: { q: query } })
-export const createBorrower = (data) => api.post('/api/borrowers', data)
-export const updateBorrower = (id, data) => api.put(`/api/borrowers/${id}`, data)
+export const createBorrower = () => api.post('/api/borrowers')
 export const deleteBorrower = (id) => api.delete(`/api/borrowers/${id}`)
 
 // Checkouts
@@ -76,6 +75,9 @@ export const deleteCheckout = (id) => api.delete(`/api/checkouts/${id}`)
 
 // Checkout History
 export const getCheckoutHistory = (params = {}) => api.get('/api/checkout-history', { params })
+
+// Activity Log
+export const getActivityLog = (params = {}) => api.get('/api/activity-log', { params })
 
 // Wishlist
 export const getWishlist = () => api.get('/api/wishlist')

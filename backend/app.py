@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 import string
-import re
 import time
 
 # Load environment variables
@@ -126,14 +125,14 @@ def sanitize_input(value, field_type='str'):
 
     return value
 
-def generate_borrower_id(first_name, conn):
+def generate_borrower_id(conn):
     """
-    Generate unique borrower_id in format: XXX#####
-    - XXX: First 3 uppercase letters from first_name (pad with X if needed)
-    - #####: 5 random uppercase alphanumeric characters
+    Generate a unique, fully random 8-character alphanumeric borrower_id.
+
+    No PII (e.g. a name) is ever used as input — the ID is the borrower's
+    only identifier, used to track their activity in the application.
 
     Args:
-        first_name (str): Borrower's first name
         conn: Database connection to check uniqueness
 
     Returns:
@@ -142,18 +141,9 @@ def generate_borrower_id(first_name, conn):
     Raises:
         Exception: If unable to generate unique ID after 100 attempts
     """
-    # Extract letters only from first name
-    letters_only = re.sub(r'[^A-Za-z]', '', first_name)
-
-    # Get first 3 characters (uppercase), pad with X if needed
-    prefix = letters_only[:3].upper() if letters_only else ''
-    prefix = prefix.ljust(3, 'X')
-
-    # Generate random 5-character alphanumeric suffix
     max_attempts = 100
     for attempt in range(max_attempts):
-        random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        borrower_id = prefix + random_part
+        borrower_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
         # Check uniqueness
         cur = conn.cursor()
@@ -164,7 +154,7 @@ def generate_borrower_id(first_name, conn):
         if not exists:
             return borrower_id
 
-    raise Exception(f'Unable to generate unique borrower_id after {max_attempts} attempts for name: {first_name}')
+    raise Exception(f'Unable to generate unique borrower_id after {max_attempts} attempts')
 
 def get_settings_dict(cur):
     """Fetch all settings as a {key: value} dict (raw string values)."""
@@ -243,6 +233,115 @@ def token_required(f):
             return jsonify({'error': 'Authentication failed'}), 401
 
     return decorated
+
+# =============================================================================
+# ACTIVITY LOG (data provenance — logs every authenticated /api/* request)
+# =============================================================================
+
+@app.after_request
+def log_activity(response):
+    """Log every authenticated API request for data provenance.
+
+    Deliberately scoped to authenticated requests only: if g.user_email was
+    never set (health check, /api/public/*, failed auth, or an OPTIONS
+    preflight — Flask answers those without ever calling token_required),
+    nothing is logged. Never let a logging failure affect the real response.
+    """
+    if not getattr(g, 'user_email', None):
+        return response
+
+    error_message = None
+    if response.status_code >= 400:
+        body = response.get_json(silent=True)
+        if isinstance(body, dict) and body.get('error'):
+            error_message = str(body.get('error'))[:500]
+
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    ip_address = ip_address.split(',')[0].strip() if ip_address else None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('''
+            INSERT INTO activity_log
+                (user_id, user_email, method, path, query_string, request_body,
+                 status_code, error_message, ip_address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            str(g.user_id), g.user_email, request.method, request.path,
+            request.query_string.decode('utf-8') or None,
+            (request.get_data(as_text=True) or '')[:1000] or None,
+            response.status_code, error_message, ip_address
+        ))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"Failed to write activity log: {str(e)}")
+
+    return response
+
+@app.route('/api/activity-log', methods=['GET'])
+@token_required
+def get_activity_log():
+    """List activity log entries with filtering and pagination."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        user = request.args.get('user', '').strip()
+        method = request.args.get('method', '').strip()
+        path = request.args.get('path', '').strip()
+        status = request.args.get('status', '').strip()
+        date_from = request.args.get('date_from', '').strip()
+        date_to = request.args.get('date_to', '').strip()
+        limit = min(int(request.args.get('limit', 100)), 500)
+        offset = max(int(request.args.get('offset', 0)), 0)
+
+        where_clauses = ['1=1']
+        params = []
+
+        if user:
+            where_clauses.append('LOWER(user_email) LIKE LOWER(%s)')
+            params.append(f'%{user}%')
+        if method:
+            where_clauses.append('method = %s')
+            params.append(method.upper())
+        if path:
+            where_clauses.append('LOWER(path) LIKE LOWER(%s)')
+            params.append(f'%{path}%')
+        if status == 'success':
+            where_clauses.append('status_code < 400')
+        elif status == 'error':
+            where_clauses.append('status_code >= 400')
+        if date_from:
+            where_clauses.append('created_at >= %s')
+            params.append(date_from)
+        if date_to:
+            where_clauses.append('created_at <= %s')
+            params.append(date_to)
+
+        where_sql = ' AND '.join(where_clauses)
+
+        cur.execute(f'SELECT COUNT(*) as total FROM activity_log WHERE {where_sql}', params)
+        total = cur.fetchone()['total']
+
+        cur.execute(f'''
+            SELECT * FROM activity_log
+            WHERE {where_sql}
+            ORDER BY created_at DESC
+            LIMIT %s OFFSET %s
+        ''', params + [limit, offset])
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({'data': rows, 'total': total})
+
+    except Exception as e:
+        logger.error(f"Error fetching activity log: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 # =============================================================================
 # HEALTH CHECK ENDPOINT
@@ -658,7 +757,7 @@ def get_book_copies(book_id):
                        WHEN co.id IS NOT NULL AND co.status = 'Checked Out'
                        THEN json_build_object(
                            'id', co.id,
-                           'borrower_name', br.first_name,
+                           'borrower_name', br.borrower_id,
                            'borrower_id', br.borrower_id,
                            'checkout_date', co.checkout_date,
                            'due_date', co.due_date
@@ -825,11 +924,10 @@ def get_borrowers():
                        COUNT(DISTINCT CASE WHEN co.status = 'Checked Out' THEN co.id END) as active_checkouts
                 FROM borrowers b
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
-                WHERE (LOWER(b.first_name) LIKE LOWER(%s)
-                       OR LOWER(b.borrower_id) LIKE LOWER(%s))
+                WHERE LOWER(b.borrower_id) LIKE LOWER(%s)
                 GROUP BY b.id
                 ORDER BY b.borrower_id ASC
-            ''', (f'%{search}%', f'%{search}%'))
+            ''', (f'%{search}%',))
         else:
             cur.execute('''
                 SELECT b.*,
@@ -853,19 +951,19 @@ def get_borrowers():
 @app.route('/api/borrowers/autocomplete', methods=['GET'])
 @token_required
 def autocomplete_borrowers():
-    """Autocomplete borrowers by name for quick selection."""
+    """Autocomplete borrowers by borrower_id for quick selection."""
     try:
         query = request.args.get('q', '').strip()
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute('''
-            SELECT id, first_name, borrower_id
+            SELECT id, borrower_id
             FROM borrowers
-            WHERE (LOWER(first_name) LIKE LOWER(%s) OR LOWER(borrower_id) LIKE LOWER(%s))
+            WHERE LOWER(borrower_id) LIKE LOWER(%s)
             ORDER BY borrower_id ASC
-            LIMIT 10
-        ''', (f'%{query}%', f'%{query}%'))
+            LIMIT 25
+        ''', (f'%{query}%',))
 
         borrowers = cur.fetchall()
         cur.close()
@@ -911,22 +1009,21 @@ def get_borrower(borrower_id):
 @app.route('/api/borrowers', methods=['POST'])
 @token_required
 def create_borrower():
-    """Create a new borrower."""
+    """Create a new borrower. No PII is collected — the borrower is identified
+    solely by a randomly generated 8-character borrower_id."""
     try:
-        data = request.json
         conn = get_db_connection()
         cur = conn.cursor()
 
         # Generate unique borrower_id
-        borrower_id = generate_borrower_id(data.get('first_name', ''), conn)
+        borrower_id = generate_borrower_id(conn)
 
         cur.execute('''
-            INSERT INTO borrowers (user_id, first_name, borrower_id)
-            VALUES (%s, %s, %s)
+            INSERT INTO borrowers (user_id, borrower_id)
+            VALUES (%s, %s)
             RETURNING *
         ''', (
             str(g.user_id),
-            data.get('first_name'),
             borrower_id
         ))
 
@@ -939,39 +1036,6 @@ def create_borrower():
 
     except Exception as e:
         logger.error(f"Error creating borrower: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/borrowers/<borrower_id>', methods=['PUT'])
-@token_required
-def update_borrower(borrower_id):
-    """Update a borrower. Note: borrower_id remains immutable for stability."""
-    try:
-        data = request.json
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute('''
-            UPDATE borrowers
-            SET first_name = %s
-            WHERE id = %s
-            RETURNING *
-        ''', (
-            data.get('first_name'),
-            borrower_id
-        ))
-
-        borrower = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        if not borrower:
-            return jsonify({'error': 'Borrower not found'}), 404
-
-        return jsonify(borrower)
-
-    except Exception as e:
-        logger.error(f"Error updating borrower: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/borrowers/<borrower_id>', methods=['DELETE'])
@@ -1037,7 +1101,7 @@ def get_checkouts():
                        b.title, b.author, b.isbn, b.barcode,
                        b.cover_medium, b.cover_large,
                        bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
-                       br.first_name, br.borrower_id,
+                       br.borrower_id as first_name, br.borrower_id,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co
                 JOIN book_copies bc ON co.copy_id = bc.id
@@ -1045,18 +1109,17 @@ def get_checkouts():
                 JOIN borrowers br ON co.borrower_id = br.id
                 WHERE co.status = 'Checked Out'
                   AND (LOWER(b.title) LIKE LOWER(%s)
-                       OR LOWER(br.first_name) LIKE LOWER(%s)
                        OR LOWER(br.borrower_id) LIKE LOWER(%s)
                        OR b.barcode LIKE %s)
                 ORDER BY co.checkout_date ASC
-            ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
+            ''', (f'%{search}%', f'%{search}%', f'%{search}%'))
         else:
             cur.execute('''
                 SELECT co.*,
                        b.title, b.author, b.isbn, b.barcode,
                        b.cover_medium, b.cover_large,
                        bc.copy_number, bc.condition, bc.location, bc.notes as copy_notes,
-                       br.first_name, br.borrower_id,
+                       br.borrower_id as first_name, br.borrower_id,
                        EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
                 FROM checkouts co
                 JOIN book_copies bc ON co.copy_id = bc.id
@@ -1278,7 +1341,7 @@ def get_checkout_history():
             SELECT co.*,
                    b.title, b.author, b.isbn,
                    bc.copy_number,
-                   br.first_name, br.borrower_id,
+                   br.borrower_id as first_name, br.borrower_id,
                    EXTRACT(DAY FROM (COALESCE(co.return_date, CURRENT_TIMESTAMP) - co.checkout_date)) as duration_days
             FROM checkouts co
             JOIN book_copies bc ON co.copy_id = bc.id
@@ -1300,10 +1363,9 @@ def get_checkout_history():
         if search:
             query += ''' AND (LOWER(b.title) LIKE LOWER(%s)
                            OR LOWER(b.author) LIKE LOWER(%s)
-                           OR LOWER(br.first_name) LIKE LOWER(%s)
                            OR LOWER(br.borrower_id) LIKE LOWER(%s))'''
             search_param = f'%{search}%'
-            params.extend([search_param, search_param, search_param, search_param])
+            params.extend([search_param, search_param, search_param])
 
         query += ' ORDER BY co.checkout_date DESC'
 
@@ -1477,7 +1539,7 @@ def get_follow_ups():
                    co.checkout_date, co.due_date,
                    b.title, b.author,
                    bc.copy_number,
-                   br.first_name, br.borrower_id,
+                   br.borrower_id as first_name, br.borrower_id,
                    EXTRACT(DAY FROM (CURRENT_TIMESTAMP - co.checkout_date)) as days_checked_out
             FROM follow_ups fu
             JOIN checkouts co ON fu.checkout_id = co.id
@@ -1681,8 +1743,9 @@ def update_settings():
 # =============================================================================
 
 def _group_fines_by_borrower(rows):
-    """Group flat fine/book rows (each already carrying borrower_id, first_name,
-    borrower_code) into a list of per-borrower objects with a nested 'books' list."""
+    """Group flat fine/book rows (each already carrying borrower_id, first_name
+    [an alias of the borrower_id — no PII is stored], borrower_code) into a
+    list of per-borrower objects with a nested 'books' list."""
     groups = {}
     order = []
     for row in rows:
@@ -1713,7 +1776,7 @@ def get_overdue_active():
         conn.commit()
 
         cur.execute('''
-            SELECT br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+            SELECT br.id as borrower_id, br.borrower_id as first_name, br.borrower_id as borrower_code,
                    f.id as fine_id, co.id as checkout_id,
                    co.checkout_date, co.due_date,
                    f.days_overdue, f.rate_applied, f.amount,
@@ -1767,7 +1830,7 @@ def get_fines():
         conn.commit()
 
         cur.execute('''
-            SELECT br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+            SELECT br.id as borrower_id, br.borrower_id as first_name, br.borrower_id as borrower_code,
                    f.id as fine_id, co.id as checkout_id,
                    co.checkout_date, co.due_date, co.return_date,
                    co.status as checkout_status,
@@ -1781,7 +1844,7 @@ def get_fines():
             JOIN books b ON bc.book_id = b.id
             JOIN borrowers br ON co.borrower_id = br.id
             LEFT JOIN users pu ON f.paid_by = pu.id
-            ORDER BY br.first_name ASC, f.created_at ASC
+            ORDER BY br.borrower_id ASC, f.created_at ASC
         ''')
 
         rows = cur.fetchall()
@@ -1891,7 +1954,7 @@ def get_fine_transactions():
                    u.email as processed_by_email,
                    f.status as fine_status, co.id as checkout_id, co.status as checkout_status,
                    b.title, b.author, bc.copy_number,
-                   br.id as borrower_id, br.first_name, br.borrower_id as borrower_code,
+                   br.id as borrower_id, br.borrower_id as first_name, br.borrower_id as borrower_code,
                    ROW_NUMBER() OVER (PARTITION BY fp.fine_id ORDER BY fp.occurred_at DESC, fp.id DESC) as rn
             FROM fine_payments fp
             JOIN fines f ON fp.fine_id = f.id
