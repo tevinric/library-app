@@ -34,11 +34,12 @@ CREATE TRIGGER update_users_updated_at
 -- =============================================================================
 -- BORROWERS TABLE
 -- =============================================================================
--- Modified: 2026-02-19 - Removed PII fields, added borrower_id for privacy
+-- Modified: 2026-09-02 - No PII is collected or stored for borrowers. Each
+-- borrower is identified solely by a randomly generated borrower_id, used to
+-- track their activity in the application (POPIA compliance).
 CREATE TABLE IF NOT EXISTS borrowers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    first_name VARCHAR(100) NOT NULL,
     borrower_id VARCHAR(8) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -52,9 +53,9 @@ CREATE TRIGGER update_borrowers_updated_at
 
 CREATE INDEX IF NOT EXISTS idx_borrowers_user_id ON borrowers(user_id);
 CREATE INDEX IF NOT EXISTS idx_borrowers_borrower_id ON borrowers(borrower_id);
-CREATE INDEX IF NOT EXISTS idx_borrowers_search ON borrowers(first_name, borrower_id);
+CREATE INDEX IF NOT EXISTS idx_borrowers_search ON borrowers(borrower_id);
 
-COMMENT ON COLUMN borrowers.borrower_id IS 'Unique 8-character identifier: 3 letters from first_name + 5 random alphanumeric characters (e.g., JOH3X7K9). Used to minimize PII exposure.';
+COMMENT ON COLUMN borrowers.borrower_id IS 'Unique random 8-character alphanumeric identifier. The borrower''s only identifier — no name or other PII is ever stored.';
 
 -- =============================================================================
 -- BOOKS TABLE (Master book records)
@@ -275,3 +276,21 @@ CREATE TABLE IF NOT EXISTS fine_payments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fine_payments_fine_id ON fine_payments(fine_id);
+
+-- ACTIVITY LOG TABLE (one row per authenticated API request — data provenance)
+CREATE TABLE IF NOT EXISTS activity_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_email VARCHAR(255),
+    method VARCHAR(10) NOT NULL,
+    path VARCHAR(500) NOT NULL,
+    query_string TEXT,
+    request_body TEXT,
+    status_code INT NOT NULL,
+    error_message TEXT,
+    ip_address VARCHAR(64),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_log_user_email ON activity_log(user_email);

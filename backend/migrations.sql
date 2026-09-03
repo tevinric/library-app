@@ -21,6 +21,25 @@ END;
 $$ language 'plpgsql';
 
 -- =============================================================================
+-- BORROWER PII REMOVAL (2026-09-02) — POPIA compliance
+-- =============================================================================
+-- Deliberate exception to the "purely additive" rule above: borrowers.first_name
+-- previously stored admin-entered PII. Borrowers are now identified only by a
+-- randomly generated borrower_id (see generate_borrower_id() in app.py), so the
+-- name column is dropped — no PII can ever be captured or stored for a borrower.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'borrowers' AND column_name = 'first_name'
+    ) THEN
+        DROP INDEX IF EXISTS idx_borrowers_search;
+        ALTER TABLE borrowers DROP COLUMN first_name;
+        CREATE INDEX IF NOT EXISTS idx_borrowers_search ON borrowers(borrower_id);
+    END IF;
+END $$;
+
+-- =============================================================================
 -- SETTINGS TABLE (global key/value config — not user-scoped)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS settings (
@@ -79,3 +98,23 @@ CREATE TABLE IF NOT EXISTS fine_payments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fine_payments_fine_id ON fine_payments(fine_id);
+
+-- =============================================================================
+-- ACTIVITY LOG TABLE (one row per authenticated API request — data provenance)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS activity_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_email VARCHAR(255),
+    method VARCHAR(10) NOT NULL,
+    path VARCHAR(500) NOT NULL,
+    query_string TEXT,
+    request_body TEXT,
+    status_code INT NOT NULL,
+    error_message TEXT,
+    ip_address VARCHAR(64),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_log_user_email ON activity_log(user_email);

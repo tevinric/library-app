@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react'
-import { getBorrowers, createBorrower, updateBorrower, deleteBorrower } from '../api'
-import { EditIcon, TrashIcon } from '../components/Icons'
+import { getBorrowers, createBorrower, deleteBorrower } from '../api'
+import { TrashIcon } from '../components/Icons'
 
 function Users() {
   const [borrowers, setBorrowers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editingBorrower, setEditingBorrower] = useState(null)
-  const [formData, setFormData] = useState({
-    first_name: ''
-  })
 
   useEffect(() => {
     loadBorrowers()
@@ -28,36 +24,18 @@ function Users() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleCreate = async () => {
     try {
       setLoading(true)
-      if (editingBorrower) {
-        await updateBorrower(editingBorrower.id, formData)
-        alert('Borrower updated successfully!')
-      } else {
-        await createBorrower(formData)
-        alert('Borrower created successfully!')
-      }
+      await createBorrower()
+      alert('Borrower created successfully!')
       setShowModal(false)
-      setEditingBorrower(null)
-      setFormData({
-        first_name: ''
-      })
       loadBorrowers()
     } catch (error) {
-      alert('Error saving borrower: ' + error.message)
+      alert('Error creating borrower: ' + error.message)
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleEdit = (borrower) => {
-    setEditingBorrower(borrower)
-    setFormData({
-      first_name: borrower.first_name
-    })
-    setShowModal(true)
   }
 
   const handleDelete = async (id) => {
@@ -69,18 +47,10 @@ function Users() {
       alert('Borrower deleted successfully!')
       loadBorrowers()
     } catch (error) {
-      alert('Error deleting borrower: ' + error.message)
+      alert('Error deleting borrower: ' + (error.response?.data?.error || error.message))
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleNewBorrower = () => {
-    setEditingBorrower(null)
-    setFormData({
-      first_name: ''
-    })
-    setShowModal(true)
   }
 
   if (loading && borrowers.length === 0) {
@@ -99,7 +69,7 @@ function Users() {
           <h1 className="text-3xl font-bold text-ink">Users (Borrowers)</h1>
           <p className="text-gray-400 mt-1">Manage library users and borrowers</p>
         </div>
-        <button onClick={handleNewBorrower} className="btn-primary self-start sm:self-auto">
+        <button onClick={() => setShowModal(true)} className="btn-primary self-start sm:self-auto">
           ➕ Add Borrower
         </button>
       </div>
@@ -110,7 +80,7 @@ function Users() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or borrower ID..."
+          placeholder="Search by borrower ID..."
           className="w-full px-4 py-2"
         />
       </div>
@@ -131,9 +101,8 @@ function Users() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-ink">
-                      {borrower.first_name}
+                      Borrower {borrower.borrower_id}
                     </h3>
-                    <p className="text-gray-400">ID: {borrower.borrower_id}</p>
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
@@ -147,13 +116,6 @@ function Users() {
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(borrower)}
-                        className="btn-secondary text-sm flex items-center gap-2"
-                      >
-                        <EditIcon className="w-4 h-4" />
-                        <span>Edit</span>
-                      </button>
                       <button
                         onClick={() => handleDelete(borrower.id)}
                         disabled={borrower.active_checkouts > 0}
@@ -177,35 +139,22 @@ function Users() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-ink mb-4">
-              {editingBorrower ? 'Edit Borrower' : 'New Borrower'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">First Name *</label>
-                <input
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                  required
-                  className="w-full px-4 py-2"
-                />
-              </div>
+            <h2 className="text-2xl font-bold text-ink mb-4">New Borrower</h2>
+            <div className="space-y-4">
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm text-gray-400">
-                  A unique borrower ID will be automatically generated {editingBorrower ? '' : 'when you create this borrower'}.
-                  {editingBorrower && ' The borrower ID remains unchanged when updating the name.'}
+                  No personal details are collected. A unique borrower ID will be automatically generated and used to track this borrower's activity.
                 </p>
               </div>
               <div className="flex gap-4">
-                <button type="submit" disabled={loading} className="btn-primary">
-                  {editingBorrower ? 'Update' : 'Create'} Borrower
+                <button onClick={handleCreate} disabled={loading} className="btn-primary">
+                  Create Borrower
                 </button>
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
                   Cancel
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

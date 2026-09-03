@@ -15,6 +15,7 @@ import Users from './pages/Users'
 import Wishlist from './pages/Wishlist'
 import FollowUps from './pages/FollowUps'
 import OverdueBooks from './pages/OverdueBooks'
+import ActivityLog from './pages/ActivityLog'
 import Settings from './pages/Settings'
 import {
   DashboardIcon,
@@ -30,7 +31,8 @@ import {
   LogoutIcon,
   MicrosoftIcon,
   AlertIcon,
-  SettingsIcon
+  SettingsIcon,
+  ClockIcon
 } from './components/Icons'
 import zoeLogo from './static/ZOE-logo-blue.png'
 import './App.css'
@@ -136,6 +138,7 @@ function App() {
     { path: '/wishlist', label: 'Wishlist', IconComponent: StarIcon },
     { path: '/follow-ups', label: 'Follow Ups', IconComponent: BellIcon },
     { path: '/overdue-books', label: 'Overdue & Fines', IconComponent: AlertIcon },
+    { path: '/activity-log', label: 'Activity Log', IconComponent: ClockIcon },
     { path: '/settings', label: 'Settings', IconComponent: SettingsIcon },
   ]
 
@@ -327,6 +330,7 @@ function App() {
             <Route path="/overdue-books" element={<OverdueBooks />} />
             {/* Fines were folded into Overdue Books — keep old links working */}
             <Route path="/fines" element={<Navigate to="/overdue-books" replace />} />
+            <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

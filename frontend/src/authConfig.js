@@ -11,6 +11,12 @@ export const msalConfig = {
   }
 }
 
+// Requests a token for OUR OWN API (see backend token_required()), not for
+// Microsoft Graph. This requires the "access_as_user" scope to be exposed
+// on this app registration (Entra Portal -> App registrations -> this app
+// -> Expose an API -> Add a scope). A Graph scope like 'User.Read' would
+// produce a token whose audience is Graph, which the backend can never
+// validate as its own.
 export const loginRequest = {
-  scopes: ['User.Read']
+  scopes: [`api://${import.meta.env.VITE_ZOELIBRARYAPP_AZURE_CLIENT_ID}/access_as_user`]
 }
