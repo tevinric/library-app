@@ -49,6 +49,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [loginError, setLoginError] = useState(null)
   const location = useLocation()
 
   // Handle DEV mode - bypass authentication
@@ -109,9 +110,25 @@ function App() {
   }
 
   // Handle login (PROD mode only)
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (IS_DEV_MODE) return
-    instance.loginPopup(loginRequest).catch(console.error)
+    setLoginError(null)
+
+    try {
+      await instance.loginPopup(loginRequest)
+    } catch (error) {
+      // Entra rejects accounts it hasn't been assigned on its own hosted page,
+      // so what reaches us here is usually just the popup being closed. Either
+      // way the message stays generic — the raw AADSTS text names the tenant
+      // and the app registration, and none of that belongs on our page.
+      console.error('Sign-in failed:', error)
+
+      if (error?.errorCode === 'popup_window_error' || error?.errorCode === 'empty_window_error') {
+        setLoginError('Your browser blocked the sign-in window. Allow pop-ups for this site and try again.')
+      } else {
+        setLoginError('Sign-in was not completed. Access is limited to approved accounts — please contact the library administrator if you should have access.')
+      }
+    }
   }
 
   // Handle logout
@@ -188,6 +205,12 @@ function App() {
               <p className="text-gray-500 max-w-md mx-auto">Explore our collection and find your next good read.</p>
             </div>
           </div>
+
+          {loginError && (
+            <div className="alert-warning max-w-md text-sm text-left" role="alert">
+              {loginError}
+            </div>
+          )}
 
           {/* Browse Library CTA */}
           <Link

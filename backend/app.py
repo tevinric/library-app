@@ -1028,7 +1028,7 @@ def get_borrowers():
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
                 WHERE LOWER(b.borrower_id) LIKE LOWER(%s)
                 GROUP BY b.id
-                ORDER BY b.borrower_id ASC
+                ORDER BY b.created_at DESC, b.borrower_id ASC
             ''', (f'%{search}%',))
         else:
             cur.execute('''
@@ -1037,7 +1037,7 @@ def get_borrowers():
                 FROM borrowers b
                 LEFT JOIN checkouts co ON b.id = co.borrower_id
                 GROUP BY b.id
-                ORDER BY b.borrower_id ASC
+                ORDER BY b.created_at DESC, b.borrower_id ASC
             ''')
 
         borrowers = cur.fetchall()
