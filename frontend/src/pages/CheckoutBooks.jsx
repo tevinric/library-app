@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { getBooks, getBookCopies, autocompleteBorrowers, createBorrower, createCheckout, getBookByBarcode, deleteBook, getSettings } from '../api'
 import BarcodeScanner from '../components/BarcodeScanner'
@@ -14,6 +14,8 @@ function CheckoutBooks() {
   const [borrowerSearch, setBorrowerSearch] = useState('')
   const [borrowerSuggestions, setBorrowerSuggestions] = useState([])
   const [borrowerDropdownOpen, setBorrowerDropdownOpen] = useState(false)
+  const [borrowerSearching, setBorrowerSearching] = useState(false)
+  const [borrowerSearchError, setBorrowerSearchError] = useState(null)
   const [selectedBorrower, setSelectedBorrower] = useState(null)
   const [showNewBorrowerForm, setShowNewBorrowerForm] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(true)
@@ -27,16 +29,61 @@ function CheckoutBooks() {
   const [scannedBookData, setScannedBookData] = useState(null)
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [checkoutResult, setCheckoutResult] = useState(null)
+  const borrowerBoxRef = useRef(null)
 
+  // The borrower picker is a combobox over EXISTING borrowers: opening it
+  // (focus or click) lists them newest-first and typing narrows by borrower ID.
+  // Suggestions are deliberately kept when it closes, so reopening shows the
+  // list immediately instead of looking empty. Keystrokes are debounced so a
+  // fast typist can't have an earlier response land after a later one.
   useEffect(() => {
-    // While the dropdown is open, an empty search shows all borrowers
-    // (up to the backend's cap) and narrows as the user types.
-    if (borrowerDropdownOpen) {
-      searchBorrowers()
-    } else {
-      setBorrowerSuggestions([])
+    if (!borrowerDropdownOpen) return
+
+    let cancelled = false
+    const query = borrowerSearch.trim()
+    setBorrowerSearching(true)
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await autocompleteBorrowers(query)
+        if (cancelled) return
+        setBorrowerSuggestions(response.data)
+        setBorrowerSearchError(null)
+      } catch (error) {
+        console.error('Error searching borrowers:', error)
+        if (cancelled) return
+        setBorrowerSuggestions([])
+        setBorrowerSearchError(error.response?.data?.error || error.message)
+      } finally {
+        if (!cancelled) setBorrowerSearching(false)
+      }
+    }, 200)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
     }
   }, [borrowerSearch, borrowerDropdownOpen])
+
+  // Closing on an outside mousedown rather than on the input's own blur is what
+  // makes clicking a suggestion dependable — a blur-then-timeout close races
+  // the click and could tear the list down before the selection registered.
+  useEffect(() => {
+    if (!borrowerDropdownOpen) return
+
+    const handleOutside = (event) => {
+      if (borrowerBoxRef.current && !borrowerBoxRef.current.contains(event.target)) {
+        setBorrowerDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [borrowerDropdownOpen])
 
   useEffect(() => {
     getSettings()
@@ -167,20 +214,28 @@ function CheckoutBooks() {
     setShowBarcodeScanner(true)
   }
 
-  const searchBorrowers = async () => {
-    try {
-      const response = await autocompleteBorrowers(borrowerSearch)
-      setBorrowerSuggestions(response.data)
-    } catch (error) {
-      console.error('Error searching borrowers:', error)
-    }
+  // Clicking an already-focused input fires no focus event, so open on both —
+  // otherwise reopening the list after a selection silently does nothing.
+  const openBorrowerDropdown = () => setBorrowerDropdownOpen(true)
+
+  const handleBorrowerSearchChange = (value) => {
+    setBorrowerSearch(value)
+    setBorrowerDropdownOpen(true)
+    // Typing over a selection invalidates it — never check out to a borrower
+    // the search box is no longer showing.
+    if (selectedBorrower) setSelectedBorrower(null)
   }
 
   const selectBorrower = (borrower) => {
     setSelectedBorrower(borrower)
     setBorrowerSearch(borrower.borrower_id)
-    setBorrowerSuggestions([])
     setBorrowerDropdownOpen(false)
+  }
+
+  const clearBorrowerSelection = () => {
+    setSelectedBorrower(null)
+    setBorrowerSearch('')
+    setBorrowerDropdownOpen(true)
   }
 
   const handleDeleteBook = async (bookId) => {
@@ -216,8 +271,10 @@ function CheckoutBooks() {
       setLoading(true)
       const response = await createBorrower()
       setSelectedBorrower(response.data)
+      setBorrowerSearch(response.data.borrower_id)
+      setBorrowerSuggestions([])
       setShowNewBorrowerForm(false)
-      alert('Borrower created successfully!')
+      alert(`Borrower created successfully!\n\nBorrower ID: ${response.data.borrower_id}\n\nGive this ID to the borrower — reuse it for every future checkout instead of creating a new one.`)
     } catch (error) {
       alert('Error creating borrower: ' + error.message)
     } finally {
@@ -567,35 +624,76 @@ function CheckoutBooks() {
       {step === 3 && !showNewBorrowerForm && (
         <div className="card">
           <h2 className="text-xl font-semibold text-ink mb-4">Select Borrower</h2>
-          <div className="relative mb-4">
+          <p className="text-sm text-gray-500 mb-2">
+            Existing borrowers keep their ID for life — look the borrower up here
+            and select them. Only create a new borrower for someone who has never
+            borrowed before.
+          </p>
+          <div className="relative mb-4" ref={borrowerBoxRef}>
             <input
               type="text"
               value={borrowerSearch}
-              onChange={(e) => setBorrowerSearch(e.target.value)}
-              onFocus={() => setBorrowerDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setBorrowerDropdownOpen(false), 150)}
-              placeholder="Click to select a borrower, or start typing borrower ID..."
+              onChange={(e) => handleBorrowerSearchChange(e.target.value)}
+              onFocus={openBorrowerDropdown}
+              onClick={openBorrowerDropdown}
+              placeholder="Click to list existing borrowers, or type a borrower ID..."
               className="w-full px-4 py-2"
+              autoComplete="off"
             />
-            {borrowerDropdownOpen && borrowerSuggestions.length > 0 && (
+            {borrowerDropdownOpen && (
               <div className="absolute z-10 w-full bg-gray-50 border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto">
-                {borrowerSuggestions.map((borrower) => (
-                  <div
-                    key={borrower.id}
-                    onClick={() => selectBorrower(borrower)}
-                    className="px-4 py-3 hover:bg-gray-200 cursor-pointer"
-                  >
-                    <p className="text-ink font-medium">ID: {borrower.borrower_id}</p>
-                  </div>
-                ))}
+                {borrowerSearchError ? (
+                  <p className="px-4 py-3 text-sm text-danger-700">
+                    Couldn't load borrowers: {borrowerSearchError}
+                  </p>
+                ) : borrowerSuggestions.length > 0 ? (
+                  // onMouseDown/preventDefault stops the input blurring mid-click
+                  borrowerSuggestions.map((borrower) => (
+                    <div
+                      key={borrower.id}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectBorrower(borrower)}
+                      className="px-4 py-3 hover:bg-gray-200 cursor-pointer flex items-center justify-between gap-3"
+                    >
+                      <p className="text-ink font-medium font-mono tracking-wide">
+                        {borrower.borrower_id}
+                      </p>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {borrower.active_checkouts > 0
+                          ? `${borrower.active_checkouts} on loan`
+                          : 'nothing on loan'}
+                      </span>
+                    </div>
+                  ))
+                ) : borrowerSearching ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">Searching...</p>
+                ) : borrowerSearch.trim() ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">
+                    No borrower ID matches "{borrowerSearch.trim()}" — clear the box
+                    to see the full list.
+                  </p>
+                ) : (
+                  <p className="px-4 py-3 text-sm text-gray-500">
+                    No borrowers registered yet.
+                  </p>
+                )}
               </div>
             )}
           </div>
 
           {selectedBorrower && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="text-ink font-semibold mb-2">Selected Borrower</h3>
-              <p className="text-gray-400 text-sm">ID: {selectedBorrower.borrower_id}</p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-ink font-semibold mb-1">Selected Borrower</h3>
+                <p className="text-primary-600 font-mono">{selectedBorrower.borrower_id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={clearBorrowerSelection}
+                className="btn-secondary text-sm whitespace-nowrap"
+              >
+                Change
+              </button>
             </div>
           )}
 

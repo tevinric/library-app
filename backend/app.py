@@ -127,6 +127,13 @@ def sanitize_input(value, field_type='str'):
 
     return value
 
+def like_pattern(value):
+    """Build a case-insensitive LIKE pattern that treats the user's text as
+    literal — a typed % or _ should narrow the search to those characters
+    rather than act as a wildcard that matches everything."""
+    escaped = value.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    return f'%{escaped}%'
+
 def generate_borrower_id(conn):
     """
     Generate a unique, fully random 8-character alphanumeric borrower_id.
@@ -1029,7 +1036,7 @@ def get_borrowers():
                 WHERE LOWER(b.borrower_id) LIKE LOWER(%s)
                 GROUP BY b.id
                 ORDER BY b.created_at DESC, b.borrower_id ASC
-            ''', (f'%{search}%',))
+            ''', (like_pattern(search),))
         else:
             cur.execute('''
                 SELECT b.*,
@@ -1053,19 +1060,28 @@ def get_borrowers():
 @app.route('/api/borrowers/autocomplete', methods=['GET'])
 @token_required
 def autocomplete_borrowers():
-    """Autocomplete borrowers by borrower_id for quick selection."""
+    """Autocomplete borrowers by borrower_id for quick selection.
+
+    An empty query intentionally lists existing borrowers (newest first, the
+    same order as the Users page) so the librarian can pick one without knowing
+    the random ID by heart — reusing a borrower's existing ID is the norm, and
+    creating a new borrower is the exception.
+    """
     try:
         query = request.args.get('q', '').strip()
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute('''
-            SELECT id, borrower_id
-            FROM borrowers
-            WHERE LOWER(borrower_id) LIKE LOWER(%s)
-            ORDER BY borrower_id ASC
-            LIMIT 25
-        ''', (f'%{query}%',))
+            SELECT b.id, b.borrower_id, b.created_at,
+                   COUNT(DISTINCT CASE WHEN co.status = 'Checked Out' THEN co.id END) as active_checkouts
+            FROM borrowers b
+            LEFT JOIN checkouts co ON b.id = co.borrower_id
+            WHERE LOWER(b.borrower_id) LIKE LOWER(%s)
+            GROUP BY b.id
+            ORDER BY b.created_at DESC, b.borrower_id ASC
+            LIMIT 50
+        ''', (like_pattern(query),))
 
         borrowers = cur.fetchall()
         cur.close()
