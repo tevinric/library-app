@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { getBooks, createBook, createBookCopy, getBookCopies, getBookByBarcode, fetchBookFromOpenLibrary, updateBookCopy } from '../api'
+import { getBooks, createBook, createBookCopy, getBookCopies, getBookByBarcode, fetchBookFromOpenLibrary, updateBookCopy, deleteBookCopy } from '../api'
 import BarcodeScanner from '../components/BarcodeScanner'
-import { BookIcon, PlusIcon, XIcon, SearchIcon, EditIcon, CheckIcon } from '../components/Icons'
+import { BookIcon, PlusIcon, XIcon, SearchIcon, EditIcon, CheckIcon, TrashIcon } from '../components/Icons'
 
 function BookRegistration() {
   const [searchParams] = useSearchParams()
@@ -44,6 +44,8 @@ function BookRegistration() {
     notes: '',
     status: ''
   })
+  const [copyToDelete, setCopyToDelete] = useState(null)
+  const [deleteCopyData, setDeleteCopyData] = useState({ reason: 'Lost', reason_notes: '' })
   const [fetchingFromOpenLibrary, setFetchingFromOpenLibrary] = useState(false)
   const [openLibraryData, setOpenLibraryData] = useState(null)
   const [showAddCopyPrompt, setShowAddCopyPrompt] = useState(false)
@@ -298,6 +300,38 @@ function BookRegistration() {
     setEditCopyData({ condition: '', location: '', notes: '', status: '' })
   }
 
+  const handleDeleteCopy = (copy) => {
+    setCopyToDelete(copy)
+    setDeleteCopyData({ reason: 'Lost', reason_notes: '' })
+  }
+
+  const cancelDeleteCopy = () => {
+    setCopyToDelete(null)
+    setDeleteCopyData({ reason: 'Lost', reason_notes: '' })
+  }
+
+  const confirmDeleteCopy = async () => {
+    if (!copyToDelete) return
+    const bookId = copyToDelete.book_id || selectedBookId
+    try {
+      setLoading(true)
+      await deleteBookCopy(copyToDelete.id, {
+        reason: deleteCopyData.reason,
+        reason_notes: deleteCopyData.reason_notes || null
+      })
+      setCopyToDelete(null)
+      setDeleteCopyData({ reason: 'Lost', reason_notes: '' })
+      // Only this copy is removed — reload so the remaining copies stay accurate
+      if (bookId) {
+        await loadCopies(bookId)
+      }
+    } catch (error) {
+      alert('Error deleting copy: ' + (error.response?.data?.error || error.message))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleBarcodeScan = async (barcode) => {
     try {
       setLoading(true)
@@ -548,13 +582,30 @@ function BookRegistration() {
                                     </div>
                                   )}
                                 </div>
-                                <button
-                                  onClick={() => handleEditCopy(copy)}
-                                  className="btn-secondary text-xs px-2 py-1 flex items-center gap-1 flex-shrink-0"
-                                >
-                                  <EditIcon className="w-3 h-3" />
-                                  <span>Edit</span>
-                                </button>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => handleEditCopy(copy)}
+                                    className="btn-secondary text-xs px-2 py-1 flex items-center gap-1"
+                                  >
+                                    <EditIcon className="w-3 h-3" />
+                                    <span>Edit</span>
+                                  </button>
+                                  {/* Only offered while the book still has more than one copy —
+                                      the last copy must be removed by deleting the book itself */}
+                                  {copies.length > 1 && (
+                                    <button
+                                      onClick={() => handleDeleteCopy(copy)}
+                                      disabled={copy.status === 'Checked Out'}
+                                      title={copy.status === 'Checked Out'
+                                        ? 'This copy is currently checked out'
+                                        : 'Delete this copy (e.g. lost or damaged)'}
+                                      className="btn-danger text-xs px-2 py-1 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      <TrashIcon className="w-3 h-3" />
+                                      <span>Delete</span>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -931,6 +982,67 @@ function BookRegistration() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Delete Copy Confirmation Modal */}
+      {copyToDelete && (
+        <div className="modal-overlay" onClick={cancelDeleteCopy}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-ink mb-2">Delete Copy</h2>
+            <p className="text-gray-600 mb-1">Are you sure you want to delete:</p>
+            <p className="text-ink font-semibold mb-1">
+              Copy #{copyToDelete.copy_number}{copyToDelete.title ? ` of "${copyToDelete.title}"` : ''}
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Condition: {copyToDelete.condition}
+              {copyToDelete.location ? ` • Location: ${copyToDelete.location}` : ''}
+            </p>
+            <p className="text-danger-700 text-sm mb-4">
+              ⚠️ Only this copy is removed — the book and its other copies are not affected.
+              This action cannot be undone, but is recorded in the activity log for provenance.
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Reason *</label>
+                <select
+                  value={deleteCopyData.reason}
+                  onChange={(e) => setDeleteCopyData({ ...deleteCopyData, reason: e.target.value })}
+                  className="w-full px-4 py-2"
+                >
+                  <option value="Lost">Lost</option>
+                  <option value="Damaged beyond repair">Damaged beyond repair</option>
+                  <option value="Withdrawn">Withdrawn from collection</option>
+                  <option value="Duplicate entry">Duplicate entry</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Notes (optional)</label>
+                <textarea
+                  value={deleteCopyData.reason_notes}
+                  onChange={(e) => setDeleteCopyData({ ...deleteCopyData, reason_notes: e.target.value })}
+                  rows="2"
+                  placeholder="Any further detail to record with this deletion"
+                  className="w-full px-4 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDeleteCopy}
+                disabled={loading}
+                className="btn-danger flex items-center gap-2"
+              >
+                <TrashIcon className="w-4 h-4" />
+                <span>{loading ? 'Deleting...' : 'Yes, Delete Copy'}</span>
+              </button>
+              <button onClick={cancelDeleteCopy} className="btn-secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

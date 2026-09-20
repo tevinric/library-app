@@ -973,10 +973,42 @@ def update_book_copy(copy_id):
 @app.route('/api/book-copies/<copy_id>', methods=['DELETE'])
 @token_required
 def delete_book_copy(copy_id):
-    """Delete a book copy."""
+    """Delete a single physical copy (e.g. lost or damaged beyond repair).
+
+    The parent book and every other copy are left untouched — only this one
+    book_copies row is removed, and remaining copies keep their existing
+    copy_number (no renumbering, so an already-labelled shelf copy never
+    silently changes identity). A snapshot of the copy is written to
+    deleted_book_copies first, so the removal stays traceable for provenance
+    after the row itself is gone; the request is also captured in activity_log
+    by the global after_request logger.
+    """
+    conn = None
+    cur = None
     try:
+        data = request.get_json(silent=True) or {}
+
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # Snapshot the copy (with its book details) before anything is removed
+        cur.execute('''
+            SELECT bc.id, bc.book_id, bc.copy_number, bc.condition, bc.location,
+                   bc.status, bc.notes, bc.created_at,
+                   b.title, b.author, b.isbn,
+                   (SELECT COUNT(*) FROM book_copies sib WHERE sib.book_id = bc.book_id) AS sibling_count,
+                   (SELECT COUNT(*) FROM checkouts co WHERE co.copy_id = bc.id) AS checkout_count
+            FROM book_copies bc
+            JOIN books b ON bc.book_id = b.id
+            WHERE bc.id = %s
+        ''', (copy_id,))
+
+        copy = cur.fetchone()
+
+        if not copy:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Book copy not found'}), 404
 
         # Check if copy is currently checked out
         cur.execute('''
@@ -989,6 +1021,33 @@ def delete_book_copy(copy_id):
             conn.close()
             return jsonify({'error': 'Cannot delete a copy that is currently checked out'}), 400
 
+        # Deleting the last copy would effectively remove the book from the
+        # shelves while leaving an orphaned book record behind. Copy deletion is
+        # for books that have more than one copy; removing the book itself is a
+        # separate, explicit action.
+        if copy['sibling_count'] <= 1:
+            cur.close()
+            conn.close()
+            return jsonify({
+                'error': 'Cannot delete the only copy of this book. Delete the book itself instead.'
+            }), 400
+
+        # Provenance record — written in the same transaction as the delete
+        cur.execute('''
+            INSERT INTO deleted_book_copies
+                (copy_id, book_id, book_title, book_author, book_isbn, copy_number,
+                 condition, location, status, notes, checkout_count, reason,
+                 reason_notes, deleted_by, deleted_by_email, copy_created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            copy['id'], copy['book_id'], copy['title'], copy['author'], copy['isbn'],
+            copy['copy_number'], copy['condition'], copy['location'], copy['status'],
+            copy['notes'], copy['checkout_count'],
+            (sanitize_input(data.get('reason')) or 'Unspecified')[:100],
+            sanitize_input(data.get('reason_notes')),
+            str(g.user_id), g.user_email, copy['created_at']
+        ))
+
         cur.execute('''
             DELETE FROM book_copies
             WHERE id = %s
@@ -996,22 +1055,75 @@ def delete_book_copy(copy_id):
         ''', (copy_id,))
 
         deleted = cur.fetchone()
+
+        if not deleted:
+            conn.rollback()
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Book copy not found'}), 404
+
         conn.commit()
         cur.close()
         conn.close()
 
-        if not deleted:
-            return jsonify({'error': 'Book copy not found'}), 404
-
-        return jsonify({'message': 'Book copy deleted successfully'})
+        return jsonify({
+            'message': f"Copy #{copy['copy_number']} deleted successfully",
+            'copy_number': copy['copy_number'],
+            'book_id': str(copy['book_id'])
+        })
 
     except psycopg2.errors.ForeignKeyViolation:
-        conn.rollback()
-        cur.close()
-        conn.close()
+        if conn:
+            conn.rollback()
+            cur.close()
+            conn.close()
         return jsonify({'error': 'Cannot delete — this copy has fine history that must be preserved for audit purposes.'}), 400
     except Exception as e:
+        if conn:
+            conn.rollback()
+            if cur:
+                cur.close()
+            conn.close()
         logger.error(f"Error deleting book copy: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/deleted-book-copies', methods=['GET'])
+@token_required
+def get_deleted_book_copies():
+    """Append-only provenance trail of every copy that has been deleted."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        book_id = request.args.get('book_id', '').strip()
+        limit = min(int(request.args.get('limit', 100)), 500)
+        offset = max(int(request.args.get('offset', 0)), 0)
+
+        where_sql = '1=1'
+        params = []
+        if book_id:
+            where_sql += ' AND book_id = %s'
+            params.append(book_id)
+
+        cur.execute(f'SELECT COUNT(*) as total FROM deleted_book_copies WHERE {where_sql}', params)
+        total = cur.fetchone()['total']
+
+        cur.execute(f'''
+            SELECT * FROM deleted_book_copies
+            WHERE {where_sql}
+            ORDER BY deleted_at DESC
+            LIMIT %s OFFSET %s
+        ''', params + [limit, offset])
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({'data': rows, 'total': total})
+
+    except Exception as e:
+        logger.error(f"Error fetching deleted book copies: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # =============================================================================

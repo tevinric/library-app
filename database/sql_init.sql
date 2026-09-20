@@ -294,3 +294,39 @@ CREATE TABLE IF NOT EXISTS activity_log (
 
 CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_activity_log_user_email ON activity_log(user_email);
+
+-- =============================================================================
+-- DELETED BOOK COPIES TABLE (2026-09-20) — provenance for copy removals
+-- =============================================================================
+-- A physical copy that is lost/destroyed/withdrawn can be deleted from
+-- book_copies without touching the parent book or its other copies. The copy
+-- row itself disappears (and checkouts cascade with it), so a snapshot of what
+-- was removed, by whom and why is written here first. Append-only: nothing in
+-- the app ever updates or deletes rows in this table.
+--
+-- No foreign key on copy_id/book_id on purpose — the copy is gone by the time
+-- the row is read, and the parent book may itself be deleted later; the audit
+-- record must outlive both.
+CREATE TABLE IF NOT EXISTS deleted_book_copies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    copy_id UUID NOT NULL,
+    book_id UUID,
+    book_title VARCHAR(500),
+    book_author VARCHAR(255),
+    book_isbn VARCHAR(50),
+    copy_number INT NOT NULL,
+    condition VARCHAR(50),
+    location VARCHAR(100),
+    status VARCHAR(50),
+    notes TEXT,
+    checkout_count INT NOT NULL DEFAULT 0,
+    reason VARCHAR(100),
+    reason_notes TEXT,
+    deleted_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    deleted_by_email VARCHAR(255),
+    copy_created_at TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_deleted_book_copies_book_id ON deleted_book_copies(book_id);
+CREATE INDEX IF NOT EXISTS idx_deleted_book_copies_deleted_at ON deleted_book_copies(deleted_at DESC);

@@ -71,7 +71,8 @@ export const deleteBook = (id) => api.delete(`/api/books/${id}`)
 export const getBookCopies = (bookId) => api.get(`/api/books/${bookId}/copies`)
 export const createBookCopy = (data) => api.post('/api/book-copies', data)
 export const updateBookCopy = (id, data) => api.put(`/api/book-copies/${id}`, data)
-export const deleteBookCopy = (id) => api.delete(`/api/book-copies/${id}`)
+export const deleteBookCopy = (id, data = {}) => api.delete(`/api/book-copies/${id}`, { data })
+export const getDeletedBookCopies = (params = {}) => api.get('/api/deleted-book-copies', { params })
 
 // Borrowers
 export const getBorrowers = (search = '') => api.get('/api/borrowers', { params: { search } })
